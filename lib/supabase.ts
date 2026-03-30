@@ -26,6 +26,11 @@ export type LinkedInAnalytics = {
   reactions: number
   comments: number
   shares: number
+  engagement_rate?: number | null
+  new_followers?: number | null
+  total_followers?: number | null
+  page_views?: number | null
+  unique_visitors?: number | null
   created_at: string
 }
 

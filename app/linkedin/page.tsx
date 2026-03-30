@@ -197,7 +197,7 @@ export default function LinkedInPage() {
                   <Tooltip
                     contentStyle={{ backgroundColor: '#0f1629', border: '1px solid #ffffff15', borderRadius: '8px', fontSize: 12 }}
                     labelStyle={{ color: '#94a3b8' }}
-                    formatter={(v: number) => [v.toLocaleString('nl-NL'), 'Impressies']}
+                    formatter={(v) => [Number(v).toLocaleString('nl-NL'), 'Impressies']}
                   />
                   <Line type="monotone" dataKey="impressions" stroke="#6366F1" strokeWidth={2} dot={false} />
                 </LineChart>
