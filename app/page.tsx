@@ -115,9 +115,9 @@ export default function Dashboard() {
         />
         <KPICard
           title="Website Sessies"
-          value="4.821"
-          change={12.3}
-          changeLabel="vs. vorige maand"
+          value="—"
+          change={0}
+          changeLabel="GA4 nog niet gekoppeld"
           icon={<MousePointerClick size={20} />}
           color="#8B5CF6"
         />
@@ -132,7 +132,7 @@ export default function Dashboard() {
         <KPICard
           title="Avg. Engagement Rate"
           value={loading ? '...' : `${avgEngagement}%`}
-          change={8.1}
+          change={0}
           changeLabel="vs. vorige maand"
           icon={<TrendingUp size={20} />}
           color="#10B981"
