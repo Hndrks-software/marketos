@@ -38,7 +38,7 @@ export default function LoginPage() {
       {/* Links: branding */}
       <div className="hidden lg:flex flex-col justify-between w-1/2 p-12">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#6366F1' }}>
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#91B24A' }}>
             <TrendingUp size={16} className="text-white" />
           </div>
           <span className="text-white font-bold text-lg">MarketOS</span>
@@ -47,7 +47,7 @@ export default function LoginPage() {
         <div>
           <p className="text-4xl font-bold text-white leading-tight mb-4">
             Jouw marketing data,<br />
-            <span style={{ color: '#6366F1' }}>op één plek.</span>
+            <span style={{ color: '#91B24A' }}>op één plek.</span>
           </p>
           <p className="text-slate-400 text-lg">
             LinkedIn analytics, contentplanning, CRM en AI-advies — allemaal in één professioneel platform.
@@ -74,7 +74,7 @@ export default function LoginPage() {
           <div className="bg-white rounded-2xl shadow-2xl p-8">
             {/* Logo op mobiel */}
             <div className="flex items-center gap-2 mb-8 lg:hidden">
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#6366F1' }}>
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#91B24A' }}>
                 <TrendingUp size={14} className="text-white" />
               </div>
               <span className="font-bold text-slate-900">MarketOS</span>
@@ -92,7 +92,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   placeholder="jij@bedrijf.nl"
-                  className="w-full px-4 py-3 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
                 />
               </div>
 
@@ -104,7 +104,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full px-4 py-3 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
                 />
               </div>
 
@@ -118,7 +118,7 @@ export default function LoginPage() {
                 type="submit"
                 disabled={loading}
                 className="w-full py-3 text-sm font-semibold text-white rounded-xl transition-all hover:opacity-90 disabled:opacity-60 flex items-center justify-center gap-2"
-                style={{ backgroundColor: '#6366F1' }}
+                style={{ backgroundColor: '#91B24A' }}
               >
                 {loading ? <><Loader2 size={16} className="animate-spin" /> Inloggen...</> : 'Inloggen'}
               </button>

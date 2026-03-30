@@ -204,7 +204,7 @@ export default function CalendarPage() {
               {day && (
                 <>
                   <span className={cn('text-xs font-semibold w-6 h-6 flex items-center justify-center rounded-full mb-1', isToday ? 'text-white' : 'text-slate-600')}
-                    style={isToday ? { backgroundColor: '#6366F1' } : {}}>
+                    style={isToday ? { backgroundColor: '#91B24A' } : {}}>
                     {day}
                   </span>
                   <div className="space-y-1">
@@ -272,7 +272,7 @@ export default function CalendarPage() {
                   <td className="px-3 py-3.5 hidden md:table-cell">
                     <div className="flex gap-1 flex-wrap">
                       {(post.tags || []).slice(0, 3).map(t => (
-                        <span key={t} className="text-xs text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded">#{t}</span>
+                        <span key={t} className="text-xs text-brand bg-brand-light px-1.5 py-0.5 rounded">#{t}</span>
                       ))}
                     </div>
                   </td>
@@ -283,7 +283,7 @@ export default function CalendarPage() {
                   </td>
                   <td className="px-5 py-3.5">
                     <button onClick={() => { setEditingPost(post); setShowModal(true) }}
-                      className="text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors">
+                      className="text-xs font-medium text-brand hover:text-brand-dark transition-colors">
                       Bewerk
                     </button>
                   </td>
@@ -334,7 +334,7 @@ export default function CalendarPage() {
           {/* New post */}
           <button onClick={() => openNew('idea')}
             className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white rounded-lg hover:opacity-90 transition-opacity"
-            style={{ backgroundColor: '#6366F1' }}>
+            style={{ backgroundColor: '#91B24A' }}>
             <Plus size={16} /> Nieuwe post
           </button>
         </div>
@@ -356,7 +356,7 @@ export default function CalendarPage() {
       {/* Content */}
       {loading ? (
         <div className="bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center h-64">
-          <Loader2 size={24} className="animate-spin text-indigo-400" />
+          <Loader2 size={24} className="animate-spin text-brand" />
         </div>
       ) : view === 'kanban' ? (
         <KanbanView />

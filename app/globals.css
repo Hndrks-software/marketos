@@ -5,6 +5,9 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --color-brand: #91B24A;
+  --color-brand-dark: #748E3B;
+  --color-brand-light: #f2f7e8;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);

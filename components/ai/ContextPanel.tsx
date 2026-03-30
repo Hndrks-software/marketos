@@ -38,15 +38,15 @@ export default function ContextPanel() {
 
       <div>
         <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Beste Post</p>
-        <div className="bg-indigo-50 rounded-lg p-3">
+        <div className="bg-brand-light rounded-lg p-3">
           <p className="text-xs font-medium text-indigo-900 mb-2 leading-relaxed">{topPost.title}</p>
           <div className="flex gap-3">
             <div>
-              <p className="text-xs text-indigo-500">Bereik</p>
+              <p className="text-xs text-brand">Bereik</p>
               <p className="text-sm font-bold text-indigo-700">{topPost.reach}</p>
             </div>
             <div>
-              <p className="text-xs text-indigo-500">Engagement</p>
+              <p className="text-xs text-brand">Engagement</p>
               <p className="text-sm font-bold text-indigo-700">{topPost.engagement}</p>
             </div>
           </div>
@@ -58,7 +58,7 @@ export default function ContextPanel() {
         <div className="space-y-2">
           {['Post tussen 7-9u of 17-19u', 'Gebruik opsommingen voor hogere engagement', 'Reageer binnen 1u op comments'].map(tip => (
             <div key={tip} className="flex items-start gap-2 text-xs text-slate-600">
-              <span className="text-indigo-400 mt-0.5">•</span>
+              <span className="text-brand mt-0.5">•</span>
               {tip}
             </div>
           ))}

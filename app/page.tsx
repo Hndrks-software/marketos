@@ -102,7 +102,7 @@ export default function Dashboard() {
     return acc
   }, {})
   const sourceColors: Record<string, string> = {
-    linkedin: '#6366F1', website: '#8B5CF6', direct: '#A78BFA', other: '#C4B5FD',
+    linkedin: '#91B24A', website: '#8B5CF6', direct: '#A78BFA', other: '#C4B5FD',
   }
   const sourceLabels: Record<string, string> = {
     linkedin: 'LinkedIn', website: 'Website', direct: 'Direct', other: 'Overig',
@@ -125,7 +125,7 @@ export default function Dashboard() {
           change={reachChange}
           changeLabel="vs. vorige maand"
           icon={<Users size={20} />}
-          color="#6366F1"
+          color="#91B24A"
         />
         <KPICard
           title="Website Sessies"
@@ -163,7 +163,7 @@ export default function Dashboard() {
               <XAxis dataKey="week" tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
               <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickFormatter={v => `${(v/1000).toFixed(0)}k`} />
               <Tooltip formatter={(v) => [Number(v).toLocaleString('nl-NL'), 'Bereik']} contentStyle={{ border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: 12 }} />
-              <Line type="monotone" dataKey="reach" stroke="#6366F1" strokeWidth={2.5} dot={{ fill: '#6366F1', r: 3 }} activeDot={{ r: 5 }} />
+              <Line type="monotone" dataKey="reach" stroke="#91B24A" strokeWidth={2.5} dot={{ fill: '#91B24A', r: 3 }} activeDot={{ r: 5 }} />
             </LineChart>
           </ResponsiveContainer>
         </div>

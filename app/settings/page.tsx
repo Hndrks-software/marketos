@@ -30,12 +30,12 @@ export default function SettingsPage() {
           <div>
             <label className="block text-xs font-medium text-slate-700 mb-1.5">Teamnaam</label>
             <input value={form.teamName} onChange={e => setForm(p => ({ ...p, teamName: e.target.value }))}
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand" />
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-700 mb-1.5">E-mailadres</label>
             <input type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand" />
           </div>
         </form>
       </div>
@@ -50,21 +50,21 @@ export default function SettingsPage() {
             <label className="block text-xs font-medium text-slate-700 mb-1.5">Supabase Project URL</label>
             <input type="url" value={form.supabaseUrl} onChange={e => setForm(p => ({ ...p, supabaseUrl: e.target.value }))}
               placeholder="https://xxxx.supabase.co"
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono" />
+              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand font-mono" />
             <p className="text-xs text-slate-400 mt-1">Stel in als <code className="bg-slate-100 px-1 rounded">NEXT_PUBLIC_SUPABASE_URL</code></p>
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-700 mb-1.5">Supabase Anon Key</label>
             <input type="password" value={form.supabaseKey} onChange={e => setForm(p => ({ ...p, supabaseKey: e.target.value }))}
               placeholder="eyJh..."
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono" />
+              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand font-mono" />
             <p className="text-xs text-slate-400 mt-1">Stel in als <code className="bg-slate-100 px-1 rounded">NEXT_PUBLIC_SUPABASE_ANON_KEY</code></p>
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-700 mb-1.5">Anthropic API Key</label>
             <input type="password" value={form.anthropicKey} onChange={e => setForm(p => ({ ...p, anthropicKey: e.target.value }))}
               placeholder="sk-ant-..."
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono" />
+              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand font-mono" />
             <p className="text-xs text-slate-400 mt-1">Stel in als <code className="bg-slate-100 px-1 rounded">ANTHROPIC_API_KEY</code></p>
           </div>
 
@@ -82,7 +82,7 @@ export default function SettingsPage() {
           <button
             type="submit"
             className="flex items-center gap-2 px-5 py-2 text-sm font-medium text-white rounded-lg transition-colors hover:opacity-90"
-            style={{ backgroundColor: '#6366F1' }}
+            style={{ backgroundColor: '#91B24A' }}
           >
             {saved && <CheckCircle size={14} />}
             {saved ? 'Opgeslagen!' : 'Wijzigingen opslaan'}

@@ -29,7 +29,7 @@ export default function ActivityFeed({ posts, leads }: ActivityFeedProps) {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
         <div className="flex items-center gap-2 mb-4">
-          <TrendingUp size={16} className="text-indigo-500" />
+          <TrendingUp size={16} className="text-brand" />
           <h3 className="font-semibold text-slate-900 text-sm">Recente Posts</h3>
         </div>
         <div className="space-y-3">
@@ -51,7 +51,7 @@ export default function ActivityFeed({ posts, leads }: ActivityFeedProps) {
 
       <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
         <div className="flex items-center gap-2 mb-4">
-          <UserPlus size={16} className="text-indigo-500" />
+          <UserPlus size={16} className="text-brand" />
           <h3 className="font-semibold text-slate-900 text-sm">Nieuwe Leads</h3>
         </div>
         <div className="space-y-3">
@@ -60,7 +60,7 @@ export default function ActivityFeed({ posts, leads }: ActivityFeedProps) {
           ) : recentLeads.map(lead => (
             <div key={lead.id} className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 text-xs font-semibold">
+                <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-brand text-xs font-semibold">
                   {lead.name.charAt(0)}
                 </div>
                 <div>

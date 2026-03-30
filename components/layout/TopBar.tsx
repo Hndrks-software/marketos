@@ -29,14 +29,14 @@ export default function TopBar() {
           <input
             type="text"
             placeholder="Zoeken..."
-            className="pl-9 pr-4 py-2 text-sm bg-slate-100 border-0 rounded-lg text-slate-600 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-52"
+            className="pl-9 pr-4 py-2 text-sm bg-slate-100 border-0 rounded-lg text-slate-600 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand w-52"
           />
         </div>
         <button className="relative w-9 h-9 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors">
           <Bell size={18} className="text-slate-600" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full" style={{ backgroundColor: '#6366F1' }} />
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full" style={{ backgroundColor: '#91B24A' }} />
         </button>
-        <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold text-white" style={{ backgroundColor: '#6366F1' }}>
+        <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold text-white" style={{ backgroundColor: '#91B24A' }}>
           M
         </div>
       </div>

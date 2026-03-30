@@ -142,7 +142,7 @@ export async function GET() {
       'Paid Search': 'Betaald', 'Referral': 'Referral',
     }
     const sourceColors: Record<string, string> = {
-      'Organic Search': '#6366F1', 'Organic Social': '#8B5CF6',
+      'Organic Search': '#91B24A', 'Organic Social': '#8B5CF6',
       'Direct': '#A78BFA', 'Email': '#C4B5FD',
       'Paid Search': '#DDD6FE', 'Referral': '#818CF8',
     }
@@ -172,7 +172,7 @@ export async function GET() {
 
     // Nieuw vs terugkerend
     const newVsLabels: Record<string, string> = { 'new': 'Nieuw', 'returning': 'Terugkerend' }
-    const newVsColors: Record<string, string> = { 'new': '#6366F1', 'returning': '#10B981' }
+    const newVsColors: Record<string, string> = { 'new': '#91B24A', 'returning': '#10B981' }
     const totalNvR = (newVsRetData.rows || []).reduce(
       (s: number, r: Row) => s + parseInt(r.metricValues?.[0]?.value || '0'), 0
     )
@@ -188,7 +188,7 @@ export async function GET() {
 
     // Apparaattype
     const deviceLabels: Record<string, string> = { 'desktop': 'Desktop', 'mobile': 'Mobiel', 'tablet': 'Tablet' }
-    const deviceColors: Record<string, string> = { 'desktop': '#6366F1', 'mobile': '#8B5CF6', 'tablet': '#A78BFA' }
+    const deviceColors: Record<string, string> = { 'desktop': '#91B24A', 'mobile': '#8B5CF6', 'tablet': '#A78BFA' }
     const totalDev = (deviceData.rows || []).reduce(
       (s: number, r: Row) => s + parseInt(r.metricValues?.[0]?.value || '0'), 0
     )

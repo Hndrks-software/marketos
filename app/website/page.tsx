@@ -138,15 +138,15 @@ export default function WebsitePage() {
               <AreaChart data={data?.dailySessions || []}>
                 <defs>
                   <linearGradient id="visitGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6366F1" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#6366F1" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#91B24A" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="#91B24A" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
                 <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
                 <Tooltip contentStyle={{ border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: 12 }} formatter={(v) => [v, 'Sessies']} />
-                <Area type="monotone" dataKey="visitors" stroke="#6366F1" strokeWidth={2} fill="url(#visitGrad)" />
+                <Area type="monotone" dataKey="visitors" stroke="#91B24A" strokeWidth={2} fill="url(#visitGrad)" />
               </AreaChart>
             </ResponsiveContainer>
           )}
@@ -282,7 +282,7 @@ export default function WebsitePage() {
                 <XAxis type="number" tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
                 <YAxis dataKey="country" type="category" tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false} width={80} />
                 <Tooltip contentStyle={{ border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: 12 }} formatter={(v) => [v, 'Sessies']} />
-                <Bar dataKey="sessions" fill="#6366F1" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="sessions" fill="#91B24A" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -310,7 +310,7 @@ export default function WebsitePage() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-slate-700 truncate font-medium">{t.term}</p>
                       <div className="w-full bg-slate-100 rounded-full h-1 mt-1">
-                        <div className="h-1 rounded-full" style={{ width: `${Math.round((t.sessions / (data?.searchTerms[0]?.sessions || 1)) * 100)}%`, backgroundColor: '#6366F1' }} />
+                        <div className="h-1 rounded-full" style={{ width: `${Math.round((t.sessions / (data?.searchTerms[0]?.sessions || 1)) * 100)}%`, backgroundColor: '#91B24A' }} />
                       </div>
                     </div>
                     <span className="text-xs font-semibold text-slate-600 shrink-0">{t.sessions}</span>
@@ -354,7 +354,7 @@ export default function WebsitePage() {
                       <td className="px-6 py-3 text-slate-600">{row.duration}</td>
                       <td className="px-6 py-3 w-32">
                         <div className="w-full bg-slate-100 rounded-full h-1.5">
-                          <div className="h-1.5 rounded-full" style={{ width: `${Math.round((row.visitors / maxVisitors) * 100)}%`, backgroundColor: '#6366F1' }} />
+                          <div className="h-1.5 rounded-full" style={{ width: `${Math.round((row.visitors / maxVisitors) * 100)}%`, backgroundColor: '#91B24A' }} />
                         </div>
                       </td>
                     </tr>

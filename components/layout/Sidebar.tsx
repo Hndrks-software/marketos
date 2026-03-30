@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard,
@@ -10,7 +11,6 @@ import {
   Globe,
   Target,
   Settings,
-  Zap,
   LogOut,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -44,11 +44,16 @@ export default function Sidebar() {
   return (
     <aside className="fixed left-0 top-0 h-full w-60 flex flex-col z-50" style={{ backgroundColor: '#0F1629' }}>
       {/* Logo */}
-      <div className="flex items-center gap-2.5 px-6 py-5 border-b border-white/10">
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#6366F1' }}>
-          <Zap size={16} className="text-white" />
-        </div>
-        <span className="text-white font-semibold text-lg tracking-tight">MarketOS</span>
+      <div className="flex items-center px-5 py-4 border-b border-white/10">
+        <Image
+          src="/collox-logo.png"
+          alt="Collo-X by FarmaSort"
+          width={148}
+          height={44}
+          className="object-contain"
+          style={{ filter: 'brightness(0) invert(1)' }}
+          priority
+        />
       </div>
 
       {/* Navigation */}
@@ -65,7 +70,7 @@ export default function Sidebar() {
                   ? 'text-white'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
               )}
-              style={isActive ? { backgroundColor: '#6366F1' } : {}}
+              style={isActive ? { backgroundColor: '#91B24A' } : {}}
             >
               <Icon size={18} className={isActive ? 'text-white' : 'text-slate-400'} />
               {label}
@@ -77,12 +82,12 @@ export default function Sidebar() {
       {/* Footer */}
       <div className="px-4 py-4 border-t border-white/10 space-y-3">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold text-white shrink-0" style={{ backgroundColor: '#6366F1' }}>
-            M
+          <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold text-white shrink-0" style={{ backgroundColor: '#91B24A' }}>
+            C
           </div>
           <div className="min-w-0">
-            <p className="text-white text-xs font-medium truncate">Marketing Team</p>
-            <p className="text-slate-500 text-xs truncate">Collo-X</p>
+            <p className="text-white text-xs font-medium truncate">Floris Hendriks</p>
+            <p className="text-slate-500 text-xs truncate">Collo-X by FarmaSort</p>
           </div>
         </div>
         <button

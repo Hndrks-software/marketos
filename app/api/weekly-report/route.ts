@@ -59,7 +59,7 @@ export async function GET(request: Request) {
 <head><meta charset="utf-8"><style>
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8fafc; margin: 0; padding: 20px; }
   .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-  .header { background: linear-gradient(135deg, #4F46E5, #7C3AED); padding: 32px; color: white; }
+  .header { background: linear-gradient(135deg, #91B24A, #748E3B); padding: 32px; color: white; }
   .header h1 { margin: 0 0 4px; font-size: 22px; font-weight: 700; }
   .header p { margin: 0; opacity: 0.8; font-size: 14px; }
   .body { padding: 28px; }
@@ -133,7 +133,7 @@ export async function GET(request: Request) {
     ` : '<p style="color:#94a3b8;font-size:13px;">Geen nieuwe leads deze week.</p>'}
   </div>
   <div class="footer">
-    Gegenereerd door MarketOS · <a href="https://marketoscollox.netlify.app" style="color:#6366F1">Open dashboard</a>
+    Gegenereerd door MarketOS · <a href="https://marketoscollox.netlify.app" style="color:#91B24A">Open dashboard</a>
   </div>
 </div>
 </body>

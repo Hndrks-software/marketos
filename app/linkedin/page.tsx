@@ -201,7 +201,7 @@ export default function LinkedInPage() {
       {/* Upload zone */}
       <div
         className={`border-2 border-dashed rounded-xl p-6 text-center transition-all cursor-pointer ${
-          isDragging ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 hover:border-indigo-300 hover:bg-slate-50 bg-white'
+          isDragging ? 'border-indigo-300 bg-brand-light' : 'border-slate-200 hover:border-indigo-300 hover:bg-slate-50 bg-white'
         }`}
         onDrop={onDrop}
         onDragOver={e => { e.preventDefault(); setIsDragging(true) }}
@@ -237,8 +237,8 @@ export default function LinkedInPage() {
           </div>
         ) : (
           <div className="flex flex-col items-center gap-2">
-            <div className="w-11 h-11 rounded-xl bg-indigo-50 flex items-center justify-center">
-              <Upload size={20} className="text-indigo-500" />
+            <div className="w-11 h-11 rounded-xl bg-brand-light flex items-center justify-center">
+              <Upload size={20} className="text-brand" />
             </div>
             <div>
               <p className="text-sm font-semibold text-slate-700">Sleep je LinkedIn exportbestand hier</p>
@@ -258,25 +258,25 @@ export default function LinkedInPage() {
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         {[
           {
-            icon: <Eye size={16} className="text-indigo-400" />,
+            icon: <Eye size={16} className="text-brand" />,
             label: 'Totaal impressies',
             value: loading ? '...' : totalImpressions.toLocaleString('nl-NL'),
             tooltip: 'Het totale aantal keer dat jouw LinkedIn posts zijn weergegeven in de feed van iemand. Hoge impressies betekenen een groot bereik.'
           },
           {
-            icon: <MousePointerClick size={16} className="text-indigo-400" />,
+            icon: <MousePointerClick size={16} className="text-brand" />,
             label: 'Totaal klikken',
             value: loading ? '...' : totalClicks.toLocaleString('nl-NL'),
             tooltip: 'Hoe vaak mensen op je posts hebben geklikt — op de link, het bedrijfslogo of om de post uit te vouwen. Klikken tonen echte interesse.'
           },
           {
-            icon: <TrendingUp size={16} className="text-indigo-400" />,
+            icon: <TrendingUp size={16} className="text-brand" />,
             label: 'Gem. engagement rate',
             value: loading ? '...' : `${avgEngagementRate}%`,
             tooltip: 'Het percentage van je bereik dat actief heeft gereageerd (reacties + klikken + comments + shares). Boven 2% is goed voor B2B LinkedIn.'
           },
           {
-            icon: <Users size={16} className="text-indigo-400" />,
+            icon: <Users size={16} className="text-brand" />,
             label: 'Totaal volgers',
             value: loading ? '...' : latestFollowers > 0 ? latestFollowers.toLocaleString('nl-NL') : data.length > 0 ? 'Upload followers' : '—',
             tooltip: 'Het totale aantal volgers van je LinkedIn bedrijfspagina. Upload het "followers" exportbestand voor de meest actuele cijfers.'
@@ -284,7 +284,7 @@ export default function LinkedInPage() {
         ].map(kpi => (
           <div key={kpi.label} className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
             <div className="flex items-center justify-between mb-3">
-              <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center">{kpi.icon}</div>
+              <div className="w-8 h-8 rounded-lg bg-brand-light flex items-center justify-center">{kpi.icon}</div>
               <InfoTooltip text={kpi.tooltip} />
             </div>
             <p className="text-2xl font-bold text-slate-900 mb-1">{kpi.value}</p>
@@ -318,15 +318,15 @@ export default function LinkedInPage() {
                 <AreaChart data={last30}>
                   <defs>
                     <linearGradient id="impGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6366F1" stopOpacity={0.2} />
-                      <stop offset="95%" stopColor="#6366F1" stopOpacity={0} />
+                      <stop offset="5%" stopColor="#91B24A" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#91B24A" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                   <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} interval={4} tickFormatter={v => v.slice(5)} />
                   <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
                   <Tooltip contentStyle={{ border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: 12 }} formatter={(v) => [Number(v).toLocaleString('nl-NL'), 'Impressies']} />
-                  <Area type="monotone" dataKey="impressions" stroke="#6366F1" strokeWidth={2} fill="url(#impGrad)" />
+                  <Area type="monotone" dataKey="impressions" stroke="#91B24A" strokeWidth={2} fill="url(#impGrad)" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -338,7 +338,7 @@ export default function LinkedInPage() {
               </div>
               <div className="space-y-4 mt-2">
                 {[
-                  { label: 'Reacties', value: totalReactions, color: '#6366F1' },
+                  { label: 'Reacties', value: totalReactions, color: '#91B24A' },
                   { label: 'Klikken', value: totalClicks, color: '#8B5CF6' },
                   { label: 'Comments', value: data.reduce((s, d) => s + (d.comments || 0), 0), color: '#10B981' },
                   { label: 'Shares', value: data.reduce((s, d) => s + (d.shares || 0), 0), color: '#F59E0B' },
@@ -374,7 +374,7 @@ export default function LinkedInPage() {
                   <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
                   <Tooltip contentStyle={{ border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: 12 }} />
                   <Legend wrapperStyle={{ fontSize: 11, color: '#64748b' }} />
-                  <Bar dataKey="reactions" stackId="a" fill="#6366F1" name="Reacties" />
+                  <Bar dataKey="reactions" stackId="a" fill="#91B24A" name="Reacties" />
                   <Bar dataKey="comments" stackId="a" fill="#8B5CF6" name="Comments" />
                   <Bar dataKey="shares" stackId="a" fill="#10B981" radius={[4, 4, 0, 0]} name="Shares" />
                 </BarChart>
@@ -449,7 +449,7 @@ export default function LinkedInPage() {
                         <td className="px-6 py-3 text-slate-600">{comments.toLocaleString('nl-NL')}</td>
                         <td className="px-6 py-3 text-slate-600">{shares.toLocaleString('nl-NL')}</td>
                         <td className="px-6 py-3">
-                          <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">{engRate}%</span>
+                          <span className="text-xs font-medium text-brand bg-brand-light px-2 py-0.5 rounded-full">{engRate}%</span>
                         </td>
                       </tr>
                     )
@@ -487,7 +487,7 @@ export default function LinkedInPage() {
                         'Video': 'text-violet-600 bg-violet-50',
                         '': 'text-slate-500 bg-slate-100',
                       }
-                      const typeStyle = typeColors[post.content_type || ''] || 'text-indigo-600 bg-indigo-50'
+                      const typeStyle = typeColors[post.content_type || ''] || 'text-brand bg-brand-light'
                       return (
                         <tr key={post.id || i} className="hover:bg-slate-50 transition-colors">
                           <td className="px-4 py-3 max-w-xs">

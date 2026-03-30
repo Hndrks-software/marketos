@@ -118,7 +118,7 @@ export default function LeadsPage() {
     <div className="space-y-5">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Totaal leads', value: leads.length.toString(), color: '#6366F1' },
+          { label: 'Totaal leads', value: leads.length.toString(), color: '#91B24A' },
           { label: 'Gekwalificeerd', value: leads.filter(l => l.status === 'qualified').length.toString(), color: '#8B5CF6' },
           { label: 'Pipeline waarde', value: `€${pipelineValue.toLocaleString('nl-NL')}`, color: '#EC4899' },
           { label: 'Gewonnen (omzet)', value: `€${totalValue.toLocaleString('nl-NL')}`, color: '#10B981' },
@@ -135,14 +135,14 @@ export default function LeadsPage() {
           {['all', 'new', 'qualified', 'won', 'lost'].map(s => (
             <button key={s} onClick={() => setFilterStatus(s)}
               className={cn('px-3 py-1.5 rounded-lg text-xs font-medium transition-colors', filterStatus === s ? 'text-white' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50')}
-              style={filterStatus === s ? { backgroundColor: '#6366F1' } : {}}>
+              style={filterStatus === s ? { backgroundColor: '#91B24A' } : {}}>
               {s === 'all' ? 'Alle' : statusConfig[s as Lead['status']]?.label}
             </button>
           ))}
         </div>
         <button onClick={() => setShowModal(true)}
           className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors hover:opacity-90"
-          style={{ backgroundColor: '#6366F1' }}>
+          style={{ backgroundColor: '#91B24A' }}>
           <Plus size={16} /> Nieuwe lead
         </button>
       </div>
@@ -150,7 +150,7 @@ export default function LeadsPage() {
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center h-48">
-            <Loader2 size={24} className="animate-spin text-indigo-400" />
+            <Loader2 size={24} className="animate-spin text-brand" />
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -179,7 +179,7 @@ export default function LeadsPage() {
                     <tr key={lead.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-6 py-3">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 text-xs font-semibold shrink-0">
+                          <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-brand text-xs font-semibold shrink-0">
                             {lead.name.charAt(0)}
                           </div>
                           <span className="font-medium text-slate-800">{lead.name}</span>
@@ -227,19 +227,19 @@ export default function LeadsPage() {
                 <div>
                   <label className="block text-xs font-medium text-slate-700 mb-1.5">Naam</label>
                   <input required value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Volledige naam" />
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand" placeholder="Volledige naam" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-700 mb-1.5">Bedrijf</label>
                   <input value={form.company} onChange={e => setForm(p => ({ ...p, company: e.target.value }))}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Bedrijfsnaam" />
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand" placeholder="Bedrijfsnaam" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-slate-700 mb-1.5">Bron</label>
                   <select value={form.source} onChange={e => setForm(p => ({ ...p, source: e.target.value }))}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand">
                     <option value="linkedin">LinkedIn</option>
                     <option value="website">Website</option>
                     <option value="direct">Direct</option>
@@ -249,7 +249,7 @@ export default function LeadsPage() {
                 <div>
                   <label className="block text-xs font-medium text-slate-700 mb-1.5">Status</label>
                   <select value={form.status} onChange={e => setForm(p => ({ ...p, status: e.target.value as Lead['status'] }))}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand">
                     <option value="new">Nieuw</option>
                     <option value="qualified">Gekwalificeerd</option>
                     <option value="won">Gewonnen</option>
@@ -260,19 +260,19 @@ export default function LeadsPage() {
               <div>
                 <label className="block text-xs font-medium text-slate-700 mb-1.5">Geschatte waarde (€)</label>
                 <input type="number" value={form.estimated_value} onChange={e => setForm(p => ({ ...p, estimated_value: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="0" />
+                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand" placeholder="0" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-700 mb-1.5">Notities</label>
                 <textarea value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} rows={3}
-                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none" />
+                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand resize-none" />
               </div>
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowModal(false)}
                   className="flex-1 px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors">Annuleren</button>
                 <button type="submit"
                   className="flex-1 px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors hover:opacity-90"
-                  style={{ backgroundColor: '#6366F1' }}>Opslaan</button>
+                  style={{ backgroundColor: '#91B24A' }}>Opslaan</button>
               </div>
             </form>
           </div>

@@ -29,7 +29,7 @@ const impactColors: Record<string, { bg: string; text: string; dot: string }> = 
 const categoryColors: Record<string, string> = {
   'SEO & Content': 'text-violet-400 bg-violet-500/10',
   'LinkedIn': 'text-blue-400 bg-blue-500/10',
-  'Lead Generation': 'text-indigo-400 bg-indigo-500/10',
+  'Lead Generation': 'text-brand bg-brand/10',
   'Website Optimalisatie': 'text-cyan-400 bg-cyan-500/10',
   'Email Marketing': 'text-pink-400 bg-pink-500/10',
   'Social Media': 'text-orange-400 bg-orange-500/10',
@@ -131,7 +131,7 @@ export default function MarketingTips() {
       {/* Section Header */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#6366F1' }}>
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#91B24A' }}>
             <Lightbulb size={16} className="text-white" />
           </div>
           <div>
@@ -148,7 +148,7 @@ export default function MarketingTips() {
           onClick={generate}
           disabled={loading}
           className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 active:scale-95"
-          style={{ backgroundColor: '#6366F1' }}
+          style={{ backgroundColor: '#91B24A' }}
         >
           <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
           {loading ? 'Genereren...' : hasLoaded ? 'Vernieuwen' : 'Genereer tips'}
@@ -166,8 +166,8 @@ export default function MarketingTips() {
       {/* Loading state */}
       {loading && (
         <div>
-          <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-indigo-500/5 border border-indigo-500/10">
-            <RefreshCw size={14} className="text-indigo-400 animate-spin" />
+          <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-brand/5 border border-indigo-500/10">
+            <RefreshCw size={14} className="text-brand animate-spin" />
             <p className="text-indigo-300 text-xs">
               Zoekt naar actuele B2B-trends en analyseert jouw data... Dit duurt ~15 seconden.
             </p>
@@ -193,8 +193,8 @@ export default function MarketingTips() {
           className="rounded-xl border border-dashed border-white/10 p-8 flex flex-col items-center justify-center text-center gap-3"
           style={{ backgroundColor: '#1a2035' }}
         >
-          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-indigo-500/10">
-            <Lightbulb size={22} className="text-indigo-400" />
+          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-brand/10">
+            <Lightbulb size={22} className="text-brand" />
           </div>
           <div>
             <p className="text-white font-medium text-sm">Klaar voor gepersonaliseerde tips?</p>
