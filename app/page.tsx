@@ -33,6 +33,7 @@ function buildWeeklyReach(analytics: LinkedInAnalytics[]) {
 export default function Dashboard() {
   const [data, setData] = useState<DashboardData>({ posts: [], leads: [], analytics: [] })
   const [loading, setLoading] = useState(true)
+  const [ga4Sessions, setGa4Sessions] = useState<{ total: number; change: number } | null>(null)
 
   useEffect(() => {
     const loadAll = async () => {
@@ -49,7 +50,19 @@ export default function Dashboard() {
       })
       setLoading(false)
     }
+
+    const loadGA4 = async () => {
+      try {
+        const res = await fetch('/api/ga4')
+        const d = await res.json()
+        if (!d.error) {
+          setGa4Sessions({ total: d.totalSessions, change: d.sessionsChange })
+        }
+      } catch {}
+    }
+
     loadAll()
+    loadGA4()
   }, [])
 
   const { posts, leads, analytics } = data
@@ -115,9 +128,9 @@ export default function Dashboard() {
         />
         <KPICard
           title="Website Sessies"
-          value="—"
-          change={0}
-          changeLabel="GA4 nog niet gekoppeld"
+          value={loading ? '...' : ga4Sessions ? ga4Sessions.total.toLocaleString('nl-NL') : '—'}
+          change={ga4Sessions?.change || 0}
+          changeLabel="vs. vorige maand"
           icon={<MousePointerClick size={20} />}
           color="#8B5CF6"
         />
