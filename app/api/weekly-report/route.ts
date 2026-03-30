@@ -3,7 +3,7 @@ import { Resend } from 'resend'
 
 export const maxDuration = 30
 
-export async function POST(request: Request) {
+export async function GET(request: Request) {
   // Beveilig het endpoint met een secret token
   const { searchParams } = new URL(request.url)
   const token = searchParams.get('token')
