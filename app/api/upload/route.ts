@@ -1,3 +1,5 @@
+import { createClient } from '@supabase/supabase-js'
+
 export async function POST(request: Request) {
   try {
     const formData = await request.formData()
@@ -39,8 +41,31 @@ export async function POST(request: Request) {
       records.push(record)
     }
 
-    // In a real app, save to Supabase here:
-    // await supabase.from('linkedin_analytics').insert(records)
+    // Save to Supabase if configured
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+    if (supabaseUrl && supabaseKey && !supabaseUrl.includes('placeholder')) {
+      const supabase = createClient(supabaseUrl, supabaseKey)
+
+      // Delete existing data for the date range to avoid duplicates
+      const dates = records.map(r => r.date as string)
+      if (dates.length > 0) {
+        await supabase
+          .from('linkedin_analytics')
+          .delete()
+          .in('date', dates)
+      }
+
+      const { error } = await supabase
+        .from('linkedin_analytics')
+        .insert(records)
+
+      if (error) {
+        console.error('Supabase insert error:', error)
+        // Still return success with data even if DB fails
+      }
+    }
 
     return Response.json({
       success: true,

@@ -1,20 +1,40 @@
 'use client'
 
-import { useState, useRef } from 'react'
-import { Upload, CloudUpload, CheckCircle, AlertCircle } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { CloudUpload, CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend
 } from 'recharts'
 import { mockLinkedInAnalytics } from '@/lib/mockData'
-import { LinkedInAnalytics } from '@/lib/supabase'
+import { supabase, LinkedInAnalytics } from '@/lib/supabase'
 
 export default function LinkedInPage() {
-  const [data, setData] = useState<LinkedInAnalytics[]>(mockLinkedInAnalytics)
+  const [data, setData] = useState<LinkedInAnalytics[]>([])
+  const [loading, setLoading] = useState(true)
   const [isDragging, setIsDragging] = useState(false)
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [uploadMessage, setUploadMessage] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    loadData()
+  }, [])
+
+  const loadData = async () => {
+    setLoading(true)
+    const { data: rows, error } = await supabase
+      .from('linkedin_analytics')
+      .select('*')
+      .order('date', { ascending: true })
+
+    if (error || !rows || rows.length === 0) {
+      setData(mockLinkedInAnalytics)
+    } else {
+      setData(rows as LinkedInAnalytics[])
+    }
+    setLoading(false)
+  }
 
   const handleUpload = async (file: File) => {
     setUploadStatus('loading')
@@ -64,13 +84,8 @@ export default function LinkedInPage() {
         onDragLeave={() => setIsDragging(false)}
         onClick={() => fileInputRef.current?.click()}
       >
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".csv"
-          className="hidden"
-          onChange={e => e.target.files?.[0] && handleUpload(e.target.files[0])}
-        />
+        <input ref={fileInputRef} type="file" accept=".csv" className="hidden"
+          onChange={e => e.target.files?.[0] && handleUpload(e.target.files[0])} />
         {uploadStatus === 'loading' ? (
           <div className="flex flex-col items-center gap-2">
             <div className="w-10 h-10 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
@@ -117,75 +132,80 @@ export default function LinkedInPage() {
         ))}
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
-          <h3 className="font-semibold text-slate-900 text-sm mb-4">Impressies over tijd</h3>
-          <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={last30}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-              <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} interval={4} />
-              <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickFormatter={v => `${(v/1000).toFixed(0)}k`} />
-              <Tooltip contentStyle={{ border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: 12 }} />
-              <Line type="monotone" dataKey="impressions" stroke="#6366F1" strokeWidth={2} dot={false} />
-            </LineChart>
-          </ResponsiveContainer>
+      {loading ? (
+        <div className="bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center h-48">
+          <Loader2 size={24} className="animate-spin text-indigo-400" />
         </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
+              <h3 className="font-semibold text-slate-900 text-sm mb-4">Impressies over tijd</h3>
+              <ResponsiveContainer width="100%" height={220}>
+                <LineChart data={last30}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} interval={4} />
+                  <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickFormatter={v => `${(v/1000).toFixed(0)}k`} />
+                  <Tooltip contentStyle={{ border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: 12 }} />
+                  <Line type="monotone" dataKey="impressions" stroke="#6366F1" strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
+              <h3 className="font-semibold text-slate-900 text-sm mb-4">Engagement metrics</h3>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={last30}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} interval={4} />
+                  <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
+                  <Tooltip contentStyle={{ border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: 12 }} />
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <Bar dataKey="reactions" stackId="a" fill="#6366F1" name="Reacties" />
+                  <Bar dataKey="comments" stackId="a" fill="#8B5CF6" name="Comments" />
+                  <Bar dataKey="shares" stackId="a" fill="#A78BFA" radius={[4, 4, 0, 0]} name="Shares" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
 
-        <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
-          <h3 className="font-semibold text-slate-900 text-sm mb-4">Engagement metrics</h3>
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={last30}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-              <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} interval={4} />
-              <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-              <Tooltip contentStyle={{ border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: 12 }} />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar dataKey="reactions" stackId="a" fill="#6366F1" radius={[0, 0, 0, 0]} name="Reacties" />
-              <Bar dataKey="comments" stackId="a" fill="#8B5CF6" name="Comments" />
-              <Bar dataKey="shares" stackId="a" fill="#A78BFA" radius={[4, 4, 0, 0]} name="Shares" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* Top 10 posts table */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100">
-          <h3 className="font-semibold text-slate-900 text-sm">Top 10 Datums — Hoogste Bereik</h3>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-slate-100">
-                {['Datum', 'Impressies', 'Clicks', 'Reacties', 'Comments', 'Shares', 'Eng. Rate'].map(h => (
-                  <th key={h} className="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {top10.map((row, i) => {
-                const engRate = row.impressions > 0
-                  ? (((row.reactions + row.comments + row.shares) / row.impressions) * 100).toFixed(2)
-                  : '0'
-                return (
-                  <tr key={row.id || i} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-3 font-medium text-slate-800">{row.date}</td>
-                    <td className="px-6 py-3 text-slate-600">{row.impressions.toLocaleString('nl-NL')}</td>
-                    <td className="px-6 py-3 text-slate-600">{row.clicks.toLocaleString('nl-NL')}</td>
-                    <td className="px-6 py-3 text-slate-600">{row.reactions.toLocaleString('nl-NL')}</td>
-                    <td className="px-6 py-3 text-slate-600">{row.comments.toLocaleString('nl-NL')}</td>
-                    <td className="px-6 py-3 text-slate-600">{row.shares.toLocaleString('nl-NL')}</td>
-                    <td className="px-6 py-3">
-                      <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">{engRate}%</span>
-                    </td>
+          <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100">
+              <h3 className="font-semibold text-slate-900 text-sm">Top 10 Datums — Hoogste Bereik</h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-100">
+                    {['Datum', 'Impressies', 'Clicks', 'Reacties', 'Comments', 'Shares', 'Eng. Rate'].map(h => (
+                      <th key={h} className="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide">{h}</th>
+                    ))}
                   </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {top10.map((row, i) => {
+                    const engRate = row.impressions > 0
+                      ? (((row.reactions + row.comments + row.shares) / row.impressions) * 100).toFixed(2)
+                      : '0'
+                    return (
+                      <tr key={row.id || i} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-6 py-3 font-medium text-slate-800">{row.date}</td>
+                        <td className="px-6 py-3 text-slate-600">{row.impressions.toLocaleString('nl-NL')}</td>
+                        <td className="px-6 py-3 text-slate-600">{row.clicks.toLocaleString('nl-NL')}</td>
+                        <td className="px-6 py-3 text-slate-600">{row.reactions.toLocaleString('nl-NL')}</td>
+                        <td className="px-6 py-3 text-slate-600">{row.comments.toLocaleString('nl-NL')}</td>
+                        <td className="px-6 py-3 text-slate-600">{row.shares.toLocaleString('nl-NL')}</td>
+                        <td className="px-6 py-3">
+                          <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">{engRate}%</span>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }

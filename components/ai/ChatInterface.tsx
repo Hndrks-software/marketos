@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Send, Bot } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { supabase } from '@/lib/supabase'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -20,12 +21,33 @@ export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [historyLoaded, setHistoryLoaded] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    loadHistory()
+  }, [])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  const loadHistory = async () => {
+    const { data } = await supabase
+      .from('chat_history')
+      .select('role, content')
+      .order('created_at', { ascending: true })
+      .limit(50)
+
+    if (data && data.length > 0) {
+      setMessages(data as Message[])
+    }
+    setHistoryLoaded(true)
+  }
+
+  const saveMessage = async (role: string, content: string) => {
+    await supabase.from('chat_history').insert({ role, content })
+  }
 
   const sendMessage = async (text: string) => {
     if (!text.trim() || isLoading) return
@@ -36,7 +58,8 @@ export default function ChatInterface() {
     setInput('')
     setIsLoading(true)
 
-    // Add empty assistant message to stream into
+    await saveMessage('user', text)
+
     setMessages(prev => [...prev, { role: 'assistant', content: '' }])
 
     try {
@@ -62,18 +85,24 @@ export default function ChatInterface() {
           return updated
         })
       }
-    } catch (error) {
+
+      await saveMessage('assistant', assistantText)
+    } catch {
+      const errMsg = 'Er is een fout opgetreden. Controleer je API-sleutel in de Netlify environment variables.'
       setMessages(prev => {
         const updated = [...prev]
-        updated[updated.length - 1] = {
-          role: 'assistant',
-          content: 'Er is een fout opgetreden. Controleer je API-sleutel in `.env.local`.',
-        }
+        updated[updated.length - 1] = { role: 'assistant', content: errMsg }
         return updated
       })
+      await saveMessage('assistant', errMsg)
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const clearHistory = async () => {
+    await supabase.from('chat_history').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+    setMessages([])
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -85,9 +114,8 @@ export default function ChatInterface() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Messages */}
       <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-1">
-        {messages.length === 0 && (
+        {historyLoaded && messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center py-8">
             <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4" style={{ backgroundColor: '#6366F115' }}>
               <Bot size={24} style={{ color: '#6366F1' }} />
@@ -106,7 +134,7 @@ export default function ChatInterface() {
             )}
             <div
               className={cn(
-                'max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed',
+                'max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap',
                 msg.role === 'user'
                   ? 'text-white rounded-br-sm'
                   : 'bg-white border border-slate-100 text-slate-800 rounded-bl-sm shadow-sm'
@@ -126,25 +154,24 @@ export default function ChatInterface() {
         <div ref={bottomRef} />
       </div>
 
-      {/* Suggestions (only when no messages) */}
-      {messages.length === 0 && (
+      {messages.length === 0 && historyLoaded && (
         <div className="flex flex-wrap gap-2 mb-3">
           {suggestions.map(s => (
-            <button
-              key={s}
-              onClick={() => sendMessage(s)}
-              className="text-xs px-3 py-2 bg-white border border-slate-200 rounded-full text-slate-600 hover:border-indigo-300 hover:text-indigo-600 transition-colors"
-            >
+            <button key={s} onClick={() => sendMessage(s)}
+              className="text-xs px-3 py-2 bg-white border border-slate-200 rounded-full text-slate-600 hover:border-indigo-300 hover:text-indigo-600 transition-colors">
               {s}
             </button>
           ))}
         </div>
       )}
 
-      {/* Input */}
       <div className="flex gap-2 items-end">
+        {messages.length > 0 && (
+          <button onClick={clearHistory} className="text-xs text-slate-400 hover:text-slate-600 px-2 py-2 shrink-0 transition-colors">
+            Wissen
+          </button>
+        )}
         <textarea
-          ref={textareaRef}
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -152,12 +179,9 @@ export default function ChatInterface() {
           rows={1}
           className="flex-1 px-4 py-3 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
         />
-        <button
-          onClick={() => sendMessage(input)}
-          disabled={!input.trim() || isLoading}
-          className="w-10 h-10 flex items-center justify-center rounded-xl text-white transition-opacity disabled:opacity-40"
-          style={{ backgroundColor: '#6366F1' }}
-        >
+        <button onClick={() => sendMessage(input)} disabled={!input.trim() || isLoading}
+          className="w-10 h-10 flex items-center justify-center rounded-xl text-white transition-opacity disabled:opacity-40 shrink-0"
+          style={{ backgroundColor: '#6366F1' }}>
           <Send size={16} />
         </button>
       </div>

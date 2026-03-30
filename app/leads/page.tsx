@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
-import { Plus, ArrowUpDown, X } from 'lucide-react'
-import { Lead } from '@/lib/supabase'
+import { useState, useEffect } from 'react'
+import { Plus, ArrowUpDown, X, Loader2 } from 'lucide-react'
+import { Lead, supabase } from '@/lib/supabase'
 import { mockLeads } from '@/lib/mockData'
 import { cn } from '@/lib/utils'
 
@@ -39,12 +39,32 @@ const emptyForm: LeadFormData = {
 }
 
 export default function LeadsPage() {
-  const [leads, setLeads] = useState<Lead[]>(mockLeads as Lead[])
+  const [leads, setLeads] = useState<Lead[]>([])
+  const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState<LeadFormData>(emptyForm)
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [sortBy, setSortBy] = useState<keyof Lead>('created_at')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
+
+  useEffect(() => {
+    loadLeads()
+  }, [])
+
+  const loadLeads = async () => {
+    setLoading(true)
+    const { data, error } = await supabase
+      .from('leads')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (error || !data || data.length === 0) {
+      setLeads(mockLeads as Lead[])
+    } else {
+      setLeads(data as Lead[])
+    }
+    setLoading(false)
+  }
 
   const handleSort = (col: keyof Lead) => {
     if (sortBy === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
@@ -62,26 +82,41 @@ export default function LeadsPage() {
   const totalValue = leads.filter(l => l.status === 'won').reduce((s, l) => s + l.estimated_value, 0)
   const pipelineValue = leads.filter(l => l.status === 'qualified').reduce((s, l) => s + l.estimated_value, 0)
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
-    const newLead: Lead = {
-      id: Date.now().toString(),
-      name: form.name,
-      company: form.company,
-      source: form.source,
-      status: form.status,
-      estimated_value: parseFloat(form.estimated_value) || 0,
-      notes: form.notes,
-      created_at: new Date().toISOString(),
+    const { data, error } = await supabase
+      .from('leads')
+      .insert({
+        name: form.name,
+        company: form.company,
+        source: form.source,
+        status: form.status,
+        estimated_value: parseFloat(form.estimated_value) || 0,
+        notes: form.notes,
+      })
+      .select()
+      .single()
+
+    if (!error && data) {
+      setLeads(prev => [data as Lead, ...prev])
     }
-    setLeads(prev => [newLead, ...prev])
     setShowModal(false)
     setForm(emptyForm)
   }
 
+  const handleStatusChange = async (id: string, newStatus: Lead['status']) => {
+    const { error } = await supabase
+      .from('leads')
+      .update({ status: newStatus })
+      .eq('id', id)
+
+    if (!error) {
+      setLeads(prev => prev.map(l => l.id === id ? { ...l, status: newStatus } : l))
+    }
+  }
+
   return (
     <div className="space-y-5">
-      {/* Summary cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: 'Totaal leads', value: leads.length.toString(), color: '#6366F1' },
@@ -96,92 +131,88 @@ export default function LeadsPage() {
         ))}
       </div>
 
-      {/* Filters + action */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex gap-1.5">
           {['all', 'new', 'qualified', 'won', 'lost'].map(s => (
-            <button
-              key={s}
-              onClick={() => setFilterStatus(s)}
-              className={cn(
-                'px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
-                filterStatus === s ? 'text-white' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-              )}
-              style={filterStatus === s ? { backgroundColor: '#6366F1' } : {}}
-            >
+            <button key={s} onClick={() => setFilterStatus(s)}
+              className={cn('px-3 py-1.5 rounded-lg text-xs font-medium transition-colors', filterStatus === s ? 'text-white' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50')}
+              style={filterStatus === s ? { backgroundColor: '#6366F1' } : {}}>
               {s === 'all' ? 'Alle' : statusConfig[s as Lead['status']]?.label}
             </button>
           ))}
         </div>
-        <button
-          onClick={() => setShowModal(true)}
+        <button onClick={() => setShowModal(true)}
           className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors hover:opacity-90"
-          style={{ backgroundColor: '#6366F1' }}
-        >
+          style={{ backgroundColor: '#6366F1' }}>
           <Plus size={16} /> Nieuwe lead
         </button>
       </div>
 
-      {/* Table */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-slate-100">
-                {[
-                  { key: 'name', label: 'Naam' },
-                  { key: 'company', label: 'Bedrijf' },
-                  { key: 'source', label: 'Bron' },
-                  { key: 'status', label: 'Status' },
-                  { key: 'estimated_value', label: 'Waarde' },
-                  { key: 'created_at', label: 'Datum' },
-                ].map(col => (
-                  <th
-                    key={col.key}
-                    className="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide cursor-pointer hover:text-slate-600 select-none"
-                    onClick={() => handleSort(col.key as keyof Lead)}
-                  >
-                    <div className="flex items-center gap-1">
-                      {col.label}
-                      <ArrowUpDown size={11} className="opacity-40" />
-                    </div>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {filtered.map(lead => {
-                const cfg = statusConfig[lead.status]
-                return (
-                  <tr key={lead.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-3">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 text-xs font-semibold shrink-0">
-                          {lead.name.charAt(0)}
+        {loading ? (
+          <div className="flex items-center justify-center h-48">
+            <Loader2 size={24} className="animate-spin text-indigo-400" />
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-100">
+                  {[
+                    { key: 'name', label: 'Naam' },
+                    { key: 'company', label: 'Bedrijf' },
+                    { key: 'source', label: 'Bron' },
+                    { key: 'status', label: 'Status' },
+                    { key: 'estimated_value', label: 'Waarde' },
+                    { key: 'created_at', label: 'Datum' },
+                  ].map(col => (
+                    <th key={col.key} className="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide cursor-pointer hover:text-slate-600 select-none"
+                      onClick={() => handleSort(col.key as keyof Lead)}>
+                      <div className="flex items-center gap-1">{col.label}<ArrowUpDown size={11} className="opacity-40" /></div>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {filtered.map(lead => {
+                  const cfg = statusConfig[lead.status]
+                  return (
+                    <tr key={lead.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-6 py-3">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 text-xs font-semibold shrink-0">
+                            {lead.name.charAt(0)}
+                          </div>
+                          <span className="font-medium text-slate-800">{lead.name}</span>
                         </div>
-                        <span className="font-medium text-slate-800">{lead.name}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-3 text-slate-600">{lead.company}</td>
-                    <td className="px-6 py-3 text-slate-600">{sourceLabel[lead.source] || lead.source}</td>
-                    <td className="px-6 py-3">
-                      <span className="text-xs font-medium px-2 py-1 rounded-full" style={{ backgroundColor: cfg.bg, color: cfg.color }}>
-                        {cfg.label}
-                      </span>
-                    </td>
-                    <td className="px-6 py-3 font-medium text-slate-800">€{lead.estimated_value.toLocaleString('nl-NL')}</td>
-                    <td className="px-6 py-3 text-slate-500 text-xs">
-                      {new Date(lead.created_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' })}
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
+                      </td>
+                      <td className="px-6 py-3 text-slate-600">{lead.company}</td>
+                      <td className="px-6 py-3 text-slate-600">{sourceLabel[lead.source] || lead.source}</td>
+                      <td className="px-6 py-3">
+                        <select
+                          value={lead.status}
+                          onChange={e => handleStatusChange(lead.id, e.target.value as Lead['status'])}
+                          className="text-xs font-medium px-2 py-1 rounded-full border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                          style={{ backgroundColor: cfg.bg, color: cfg.color }}
+                        >
+                          {Object.entries(statusConfig).map(([val, s]) => (
+                            <option key={val} value={val}>{s.label}</option>
+                          ))}
+                        </select>
+                      </td>
+                      <td className="px-6 py-3 font-medium text-slate-800">€{lead.estimated_value.toLocaleString('nl-NL')}</td>
+                      <td className="px-6 py-3 text-slate-500 text-xs">
+                        {new Date(lead.created_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
-      {/* New lead modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowModal(false)} />
