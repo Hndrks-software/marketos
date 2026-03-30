@@ -1,4 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
+import { requireAuth } from '@/lib/auth'
+import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rateLimit'
 
 export const maxDuration = 30
 
@@ -35,8 +37,20 @@ type PostRow = {
 }
 
 export async function POST(request: Request) {
+  const user = await requireAuth()
+  if (user instanceof Response) return user
+
+  const rl = checkRateLimit(`${getClientIP(request)}:/api/linkedin-import`, 10)
+  if (!rl.allowed) return rateLimitResponse(rl.resetAt)
+
   try {
-    const { rows, fileType } = await request.json() as { rows: (AnalyticsRow | PostRow)[]; fileType: string }
+    const body = await request.json()
+    const rows = body?.rows
+    const fileType = body?.fileType
+
+    if (!Array.isArray(rows) || typeof fileType !== 'string') {
+      return Response.json({ error: 'Ongeldig verzoek' }, { status: 400 })
+    }
 
     if (!rows || rows.length === 0) {
       return Response.json({ error: 'Geen data ontvangen' }, { status: 400 })

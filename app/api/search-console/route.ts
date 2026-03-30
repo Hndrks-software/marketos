@@ -1,4 +1,6 @@
 import { JWT } from 'google-auth-library'
+import { requireAuth } from '@/lib/auth'
+import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rateLimit'
 
 export const maxDuration = 30
 
@@ -45,7 +47,13 @@ async function querySearchConsole(token: string, body: object) {
   return data
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const user = await requireAuth()
+  if (user instanceof Response) return user
+
+  const rl = checkRateLimit(`${getClientIP(request)}:/api/search-console`, 30)
+  if (!rl.allowed) return rateLimitResponse(rl.resetAt)
+
   try {
     if (!siteUrl) {
       return Response.json({ error: 'SEARCH_CONSOLE_SITE_URL niet ingesteld' }, { status: 500 })

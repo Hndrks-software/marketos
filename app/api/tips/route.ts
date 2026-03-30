@@ -1,6 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
 import { JWT } from 'google-auth-library'
+import { requireAuth } from '@/lib/auth'
+import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rateLimit'
 
 export const maxDuration = 60 // Netlify: sta 60 seconden toe voor AI + websearch
 
@@ -128,7 +130,13 @@ async function getSupabaseContext(): Promise<string> {
 
 // ─── API Route ────────────────────────────────────────────────────────────────
 
-export async function POST() {
+export async function POST(request: Request) {
+  const user = await requireAuth()
+  if (user instanceof Response) return user
+
+  const rl = checkRateLimit(`${getClientIP(request)}:/api/tips`, 20)
+  if (!rl.allowed) return rateLimitResponse(rl.resetAt)
+
   try {
     const [ga4Summary, supabaseContext] = await Promise.all([
       getGA4Summary(),
@@ -185,7 +193,7 @@ Geef ALLEEN de JSON-array terug, geen extra tekst.`
     // Parse JSON from the response
     const jsonMatch = rawText.match(/\[[\s\S]*\]/)
     if (!jsonMatch) {
-      return Response.json({ error: 'Kon geen tips genereren', raw: rawText }, { status: 500 })
+      return Response.json({ error: 'Kon geen tips genereren' }, { status: 500 })
     }
 
     const tips = JSON.parse(jsonMatch[0])

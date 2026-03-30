@@ -1,5 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
+import { requireAuth } from '@/lib/auth'
+import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rateLimit'
 
 const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -56,8 +58,18 @@ Geef concrete, data-gedreven adviezen. Wees direct en bondig. Gebruik bullet poi
 }
 
 export async function POST(request: Request) {
+  const user = await requireAuth()
+  if (user instanceof Response) return user
+
+  const rl = checkRateLimit(`${getClientIP(request)}:/api/chat`, 20)
+  if (!rl.allowed) return rateLimitResponse(rl.resetAt)
+
   try {
-    const { messages } = await request.json()
+    const body = await request.json()
+    const messages = body?.messages
+    if (!Array.isArray(messages)) {
+      return Response.json({ error: 'Ongeldig verzoek' }, { status: 400 })
+    }
 
     const systemPrompt = await buildSystemPrompt()
 
@@ -66,7 +78,7 @@ export async function POST(request: Request) {
       max_tokens: 1024,
       system: systemPrompt,
       messages: messages.map((m: { role: string; content: string }) => ({
-        role: m.role,
+        role: m.role as 'user' | 'assistant',
         content: m.content,
       })),
       stream: true,

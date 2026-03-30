@@ -1,6 +1,14 @@
 import { createClient } from '@supabase/supabase-js'
+import { requireAuth } from '@/lib/auth'
+import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rateLimit'
 
 export async function POST(request: Request) {
+  const user = await requireAuth()
+  if (user instanceof Response) return user
+
+  const rl = checkRateLimit(`${getClientIP(request)}:/api/upload`, 10)
+  if (!rl.allowed) return rateLimitResponse(rl.resetAt)
+
   try {
     const formData = await request.formData()
     const file = formData.get('file') as File

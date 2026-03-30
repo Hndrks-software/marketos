@@ -1,4 +1,6 @@
 import { JWT } from 'google-auth-library'
+import { requireAuth } from '@/lib/auth'
+import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rateLimit'
 
 const propertyId = process.env.GA4_PROPERTY_ID || ''
 
@@ -37,7 +39,13 @@ async function runReport(token: string, body: object) {
 
 type Row = { dimensionValues?: { value: string }[]; metricValues?: { value: string }[] }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const user = await requireAuth()
+  if (user instanceof Response) return user
+
+  const rl = checkRateLimit(`${getClientIP(request)}:/api/ga4`, 30)
+  if (!rl.allowed) return rateLimitResponse(rl.resetAt)
+
   try {
     const token = await getAccessToken()
     const daysAgo = (n: number) =>

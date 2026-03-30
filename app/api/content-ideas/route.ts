@@ -1,11 +1,19 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
+import { requireAuth } from '@/lib/auth'
+import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rateLimit'
 
 export const maxDuration = 30
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || '' })
 
-export async function POST() {
+export async function POST(request: Request) {
+  const user = await requireAuth()
+  if (user instanceof Response) return user
+
+  const rl = checkRateLimit(`${getClientIP(request)}:/api/content-ideas`, 20)
+  if (!rl.allowed) return rateLimitResponse(rl.resetAt)
+
   try {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL || '',

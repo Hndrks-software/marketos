@@ -1,6 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
 import { JWT } from 'google-auth-library'
+import { requireAuth } from '@/lib/auth'
+import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rateLimit'
 
 export const maxDuration = 60
 
@@ -194,9 +196,19 @@ async function getLinkedInData(): Promise<string> {
 }
 
 export async function POST(request: Request) {
+  const user = await requireAuth()
+  if (user instanceof Response) return user
+
+  const rl = checkRateLimit(`${getClientIP(request)}:/api/insights`, 20)
+  if (!rl.allowed) return rateLimitResponse(rl.resetAt)
+
   try {
     const body = await request.json().catch(() => ({}))
     const page = (body as { page?: string }).page || 'dashboard'
+    const validPages = ['dashboard', 'linkedin', 'website']
+    if (!validPages.includes(page)) {
+      return Response.json({ error: 'Ongeldige pagina' }, { status: 400 })
+    }
 
     const [ga4Data, linkedInData] = await Promise.all([getGA4Data(), getLinkedInData()])
 
@@ -277,7 +289,7 @@ ALLEEN JSON, geen extra tekst. Nederlands.`,
 
     const jsonMatch = rawText.match(/\{[\s\S]*\}/)
     if (!jsonMatch) {
-      return Response.json({ error: 'Kon geen analyse genereren', raw: rawText }, { status: 500 })
+      return Response.json({ error: 'Kon geen analyse genereren' }, { status: 500 })
     }
 
     const insights = JSON.parse(jsonMatch[0])
