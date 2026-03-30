@@ -240,7 +240,7 @@ export default function SalesDashboard() {
               <XAxis type="number" tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
               <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false} width={110} />
               <Tooltip
-                formatter={(v: number) => [v, 'Leads']}
+                formatter={(v) => [v, 'Leads']}
                 contentStyle={{ border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: 12 }}
               />
               <Bar dataKey="leads" radius={[0, 6, 6, 0]}>
@@ -264,7 +264,7 @@ export default function SalesDashboard() {
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(v: number) => [v, 'Leads']}
+                  formatter={(v) => [v, 'Leads']}
                   contentStyle={{ border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: 12 }}
                 />
               </PieChart>
@@ -306,7 +306,7 @@ export default function SalesDashboard() {
               <XAxis dataKey="week" tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
               <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} allowDecimals={false} />
               <Tooltip
-                formatter={(v: number) => [v, 'Leads']}
+                formatter={(v) => [v, 'Leads']}
                 contentStyle={{ border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: 12 }}
               />
               <Area type="monotone" dataKey="leads" stroke="#3b82f6" strokeWidth={2} fill="url(#leadGradient)" />
