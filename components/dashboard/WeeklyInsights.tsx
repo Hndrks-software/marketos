@@ -122,9 +122,9 @@ export default function WeeklyInsights() {
   // Loading state
   if (loading && !data) {
     return (
-      <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-6 text-white">
+      <div className="gradient-card-dark rounded-2xl p-6 text-white">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#91B24A' }}>
+          <div className="w-10 h-10 rounded-xl bg-brand flex items-center justify-center">
             <Brain size={20} className="text-white" />
           </div>
           <div>
@@ -143,7 +143,7 @@ export default function WeeklyInsights() {
   // Error state
   if (error && !data) {
     return (
-      <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-6 text-white">
+      <div className="gradient-card-dark rounded-2xl p-6 text-white">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center">
@@ -164,10 +164,10 @@ export default function WeeklyInsights() {
 
   if (!data) {
     return (
-      <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-6 text-white">
+      <div className="gradient-card-dark rounded-2xl p-6 text-white">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#91B24A' }}>
+            <div className="w-10 h-10 rounded-xl bg-brand flex items-center justify-center">
               <Brain size={20} className="text-white" />
             </div>
             <div>
@@ -178,8 +178,7 @@ export default function WeeklyInsights() {
           <button
             onClick={generateInsights}
             disabled={loading}
-            className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
-            style={{ backgroundColor: '#91B24A' }}
+            className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 bg-brand"
           >
             {loading ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
             Genereer analyse
@@ -192,11 +191,11 @@ export default function WeeklyInsights() {
   const completedCount = data.actions.filter(a => completedActions.has(a.title)).length
 
   return (
-    <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl overflow-hidden">
+    <div className="gradient-card-dark rounded-2xl overflow-hidden">
       {/* Header */}
       <div className="px-6 pt-5 pb-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#91B24A' }}>
+          <div className="w-10 h-10 rounded-xl bg-brand flex items-center justify-center">
             <Brain size={20} className="text-white" />
           </div>
           <div>
@@ -277,7 +276,7 @@ export default function WeeklyInsights() {
               >
                 <div className="mt-0.5 shrink-0">
                   {done
-                    ? <CheckCircle2 size={18} style={{ color: '#91B24A' }} />
+                    ? <CheckCircle2 size={18} className="text-brand" />
                     : <Circle size={18} className="text-slate-500" />
                   }
                 </div>

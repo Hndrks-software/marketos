@@ -16,11 +16,11 @@ export default function KPICard({ title, value, change, changeLabel, icon, color
   const isPositive = change >= 0
 
   return (
-    <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100 hover:shadow-md transition-shadow">
+    <div className="bg-white rounded-xl p-5 border border-slate-200/60 shadow-sm hover:shadow-md transition-all duration-200">
       <div className="flex items-start justify-between mb-4">
         <div
           className="w-10 h-10 rounded-lg flex items-center justify-center"
-          style={{ backgroundColor: `${color}15` }}
+          style={{ backgroundColor: `${color}12` }}
         >
           <span style={{ color }}>{icon}</span>
         </div>
@@ -37,7 +37,7 @@ export default function KPICard({ title, value, change, changeLabel, icon, color
         </span>
       </div>
       <p className="text-2xl font-bold text-slate-900 mb-1">{value}</p>
-      <p className="text-sm text-slate-500">{title}</p>
+      <p className="text-sm text-slate-600">{title}</p>
       <p className="text-xs text-slate-400 mt-1">{changeLabel}</p>
     </div>
   )

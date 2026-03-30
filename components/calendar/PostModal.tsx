@@ -59,8 +59,8 @@ export default function PostModal({ post, onClose, onSave, onDelete }: PostModal
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b border-slate-100">
+      <div className="relative bg-white rounded-xl shadow-xl w-full max-w-xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-6 border-b border-slate-200/60">
           <h2 className="font-semibold text-slate-900 text-lg">
             {post?.id ? 'Post bewerken' : 'Nieuwe post'}
           </h2>
@@ -76,7 +76,7 @@ export default function PostModal({ post, onClose, onSave, onDelete }: PostModal
               type="text"
               value={form.title}
               onChange={e => setForm(prev => ({ ...prev, title: e.target.value }))}
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
+              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand/30 focus:border-brand"
               placeholder="Geef je post een titel..."
               required
             />
@@ -88,7 +88,7 @@ export default function PostModal({ post, onClose, onSave, onDelete }: PostModal
               <select
                 value={form.channel}
                 onChange={e => setForm(prev => ({ ...prev, channel: e.target.value as Post['channel'] }))}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
+                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand"
               >
                 {channelOptions.map(o => (
                   <option key={o.value} value={o.value}>{o.label}</option>
@@ -100,7 +100,7 @@ export default function PostModal({ post, onClose, onSave, onDelete }: PostModal
               <select
                 value={form.status}
                 onChange={e => setForm(prev => ({ ...prev, status: e.target.value as Post['status'] }))}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
+                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand"
               >
                 {statusOptions.map(o => (
                   <option key={o.value} value={o.value}>{o.label}</option>
@@ -115,7 +115,7 @@ export default function PostModal({ post, onClose, onSave, onDelete }: PostModal
               type="date"
               value={form.scheduled_date}
               onChange={e => setForm(prev => ({ ...prev, scheduled_date: e.target.value }))}
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
+              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand"
             />
           </div>
 
@@ -133,7 +133,7 @@ export default function PostModal({ post, onClose, onSave, onDelete }: PostModal
               onChange={e => setForm(prev => ({ ...prev, content: e.target.value }))}
               maxLength={form.channel === 'linkedin' ? 3000 : undefined}
               rows={6}
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand resize-none"
+              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand resize-none"
               placeholder="Schrijf je post content hier..."
             />
           </div>
@@ -153,7 +153,7 @@ export default function PostModal({ post, onClose, onSave, onDelete }: PostModal
               value={tagInput}
               onChange={e => setTagInput(e.target.value)}
               onKeyDown={addTag}
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand"
+              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand"
               placeholder="Tag toevoegen (Enter)"
             />
           </div>
@@ -177,8 +177,7 @@ export default function PostModal({ post, onClose, onSave, onDelete }: PostModal
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors"
-              style={{ backgroundColor: '#91B24A' }}
+              className="flex-1 px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors bg-brand hover:opacity-90"
             >
               Opslaan
             </button>

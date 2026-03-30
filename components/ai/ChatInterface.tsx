@@ -117,8 +117,8 @@ export default function ChatInterface() {
       <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-1">
         {historyLoaded && messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center py-8">
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4" style={{ backgroundColor: '#91B24A15' }}>
-              <Bot size={24} style={{ color: '#91B24A' }} />
+            <div className="w-12 h-12 rounded-2xl bg-brand-muted flex items-center justify-center mb-4">
+              <Bot size={24} className="text-brand" />
             </div>
             <p className="text-slate-700 font-medium mb-1">Hoe kan ik je helpen?</p>
             <p className="text-slate-400 text-sm">Stel me een vraag over je marketing data of laat me content schrijven.</p>
@@ -128,7 +128,7 @@ export default function ChatInterface() {
         {messages.map((msg, i) => (
           <div key={i} className={cn('flex', msg.role === 'user' ? 'justify-end' : 'justify-start')}>
             {msg.role === 'assistant' && (
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center mr-2 mt-0.5 shrink-0" style={{ backgroundColor: '#91B24A' }}>
+              <div className="w-7 h-7 rounded-lg bg-brand flex items-center justify-center mr-2 mt-0.5 shrink-0">
                 <Bot size={14} className="text-white" />
               </div>
             )}
@@ -139,7 +139,7 @@ export default function ChatInterface() {
                   ? 'text-white rounded-br-sm'
                   : 'bg-white border border-slate-100 text-slate-800 rounded-bl-sm shadow-sm'
               )}
-              style={msg.role === 'user' ? { backgroundColor: '#91B24A' } : {}}
+              style={msg.role === 'user' ? { backgroundColor: 'var(--color-brand)' } : {}}
             >
               {msg.content || (
                 <span className="flex gap-1">
@@ -177,11 +177,10 @@ export default function ChatInterface() {
           onKeyDown={handleKeyDown}
           placeholder="Stel een vraag... (Enter om te versturen)"
           rows={1}
-          className="flex-1 px-4 py-3 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent resize-none"
+          className="flex-1 px-4 py-3 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand resize-none"
         />
         <button onClick={() => sendMessage(input)} disabled={!input.trim() || isLoading}
-          className="w-10 h-10 flex items-center justify-center rounded-xl text-white transition-opacity disabled:opacity-40 shrink-0"
-          style={{ backgroundColor: '#91B24A' }}>
+          className="w-10 h-10 flex items-center justify-center rounded-xl text-white transition-opacity disabled:opacity-40 shrink-0 bg-brand">
           <Send size={16} />
         </button>
       </div>

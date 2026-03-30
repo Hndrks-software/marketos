@@ -286,7 +286,7 @@ export default function LinkedInPage() {
             tooltip: 'Het totale aantal volgers van je LinkedIn bedrijfspagina. Upload het "followers" exportbestand voor de meest actuele cijfers.'
           },
         ].map(kpi => (
-          <div key={kpi.label} className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
+          <div key={kpi.label} className="bg-white rounded-xl p-5 shadow-sm border border-slate-200/60">
             <div className="flex items-center justify-between mb-3">
               <div className="w-8 h-8 rounded-lg bg-brand-light flex items-center justify-center">{kpi.icon}</div>
               <InfoTooltip text={kpi.tooltip} />
@@ -298,7 +298,7 @@ export default function LinkedInPage() {
       </div>
 
       {loading ? (
-        <div className="bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center h-48">
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200/60 flex items-center justify-center h-48">
           <Loader2 size={24} className="animate-spin text-indigo-300" />
         </div>
       ) : data.length === 0 ? (
@@ -313,7 +313,7 @@ export default function LinkedInPage() {
         <>
           {/* Impressies + Engagement */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 bg-white rounded-xl p-5 shadow-sm border border-slate-100">
+            <div className="lg:col-span-2 bg-white rounded-xl p-5 shadow-sm border border-slate-200/60">
               <div className="flex items-center gap-2 mb-4">
                 <h3 className="font-semibold text-slate-900 text-sm">Impressies over tijd (laatste 30 dagen)</h3>
                 <InfoTooltip text="Het dagelijks bereik van je LinkedIn posts. Pieken zijn vaak nieuwe posts of posts die viral gaan. Een stabiele lijn betekent consistent posten." />
@@ -335,7 +335,7 @@ export default function LinkedInPage() {
               </ResponsiveContainer>
             </div>
 
-            <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
+            <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200/60">
               <div className="flex items-center gap-2 mb-4">
                 <h3 className="font-semibold text-slate-900 text-sm">Engagement totalen</h3>
                 <InfoTooltip text="De totale som van alle interacties over de gehele periode. Reacties tonen emotionele betrokkenheid, shares vergroten je bereik, comments starten gesprekken." />
@@ -366,7 +366,7 @@ export default function LinkedInPage() {
 
           {/* Engagement chart + Volgers */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
+            <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200/60">
               <div className="flex items-center gap-2 mb-4">
                 <h3 className="font-semibold text-slate-900 text-sm">Dagelijkse engagement (laatste 30 dagen)</h3>
                 <InfoTooltip text="Hoe actief je publiek dagelijks reageert op je posts. Hoge pieken zijn vaak reacties op een succesvolle post. Een constante lijn toont een betrokken vaste doelgroep." />
@@ -385,7 +385,7 @@ export default function LinkedInPage() {
               </ResponsiveContainer>
             </div>
 
-            <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
+            <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200/60">
               <div className="flex items-center gap-2 mb-4">
                 <h3 className="font-semibold text-slate-900 text-sm">Nieuwe volgers per dag (laatste 30 dagen)</h3>
                 <InfoTooltip text="Hoeveel nieuwe mensen je pagina dagelijks gaan volgen. Pieken zijn vaak gekoppeld aan een virale post of actieve campagne. Upload het 'followers' bestand voor deze data." />
@@ -416,7 +416,7 @@ export default function LinkedInPage() {
           </div>
 
           {/* Top 10 tabel */}
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200/60 overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <h3 className="font-semibold text-slate-900 text-sm">Top 10 — Beste dagen op bereik</h3>
@@ -465,7 +465,7 @@ export default function LinkedInPage() {
 
           {/* Per-post analyse */}
           {posts.length > 0 && (
-            <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200/60 overflow-hidden">
               <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <h3 className="font-semibold text-slate-900 text-sm">Posts — individuele prestaties</h3>

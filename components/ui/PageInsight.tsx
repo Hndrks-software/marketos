@@ -66,7 +66,7 @@ export default function PageInsight({ page }: PageInsightProps) {
 
   if (loading && !data) {
     return (
-      <div className="bg-gradient-to-r from-slate-900 to-slate-800 rounded-xl p-4 flex items-center gap-3">
+      <div className="gradient-card-dark rounded-xl p-4 flex items-center gap-3">
         <Loader2 size={18} className="animate-spin text-slate-400" />
         <span className="text-sm text-slate-400">AI analyseert je data...</span>
       </div>
@@ -89,9 +89,9 @@ export default function PageInsight({ page }: PageInsightProps) {
 
   if (!data) {
     return (
-      <div className="bg-gradient-to-r from-slate-900 to-slate-800 rounded-xl p-4 flex items-center justify-between">
+      <div className="gradient-card-dark rounded-xl p-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#91B24A' }}>
+          <div className="w-7 h-7 rounded-lg bg-brand flex items-center justify-center">
             <Brain size={14} className="text-white" />
           </div>
           <span className="text-sm text-slate-300">AI Inzicht beschikbaar</span>
@@ -99,8 +99,7 @@ export default function PageInsight({ page }: PageInsightProps) {
         <button
           onClick={generate}
           disabled={loading}
-          className="flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
-          style={{ backgroundColor: '#91B24A' }}
+          className="flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 bg-brand"
         >
           {loading ? <Loader2 size={13} className="animate-spin" /> : <Lightbulb size={13} />}
           Genereer inzicht
@@ -114,10 +113,10 @@ export default function PageInsight({ page }: PageInsightProps) {
   const website = data as WebsiteInsight
 
   return (
-    <div className="bg-gradient-to-r from-slate-900 to-slate-800 rounded-xl p-5">
+    <div className="gradient-card-dark rounded-xl p-5">
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#91B24A' }}>
+          <div className="w-7 h-7 rounded-lg bg-brand flex items-center justify-center">
             <Brain size={14} className="text-white" />
           </div>
           <span className="text-sm font-semibold text-white">AI Inzicht</span>
@@ -164,7 +163,7 @@ export default function PageInsight({ page }: PageInsightProps) {
 
       {/* Tip */}
       <div className="mt-3 flex items-start gap-2 px-3 py-2 bg-white/5 rounded-lg">
-        <Lightbulb size={14} className="mt-0.5 shrink-0" style={{ color: '#91B24A' }} />
+        <Lightbulb size={14} className="mt-0.5 shrink-0 text-brand" />
         <p className="text-xs text-slate-300">{isLinkedIn ? linkedIn.tip : website.tip}</p>
       </div>
     </div>

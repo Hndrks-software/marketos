@@ -131,7 +131,7 @@ export default function MarketingTips() {
       {/* Section Header */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#91B24A' }}>
+          <div className="w-8 h-8 rounded-lg bg-brand flex items-center justify-center">
             <Lightbulb size={16} className="text-white" />
           </div>
           <div>
@@ -147,8 +147,7 @@ export default function MarketingTips() {
         <button
           onClick={generate}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 active:scale-95"
-          style={{ backgroundColor: '#91B24A' }}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 active:scale-95 bg-brand"
         >
           <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
           {loading ? 'Genereren...' : hasLoaded ? 'Vernieuwen' : 'Genereer tips'}

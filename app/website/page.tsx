@@ -56,7 +56,7 @@ export default function WebsitePage() {
   }, [fetchRealtime])
 
   const Skeleton = () => (
-    <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100 flex items-center justify-center h-32">
+    <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200/60 flex items-center justify-center h-32">
       <Loader2 size={20} className="animate-spin text-indigo-300" />
     </div>
   )
@@ -77,7 +77,7 @@ export default function WebsitePage() {
       {/* KPI Rij */}
       <div className="grid grid-cols-2 xl:grid-cols-5 gap-4">
         {/* Live bezoekers */}
-        <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200/60">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -95,7 +95,7 @@ export default function WebsitePage() {
           Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} />)
         ) : (
           <>
-            <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
+            <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200/60">
               <div className="flex items-center justify-between mb-1">
                 <p className="text-2xl font-bold text-slate-900">{data?.totalSessions.toLocaleString('nl-NL')}</p>
                 <InfoTooltip text="Een sessie is één bezoek aan je website. Eén persoon kan meerdere sessies hebben op één dag, bijvoorbeeld als hij na een uur terugkomt." />
@@ -105,21 +105,21 @@ export default function WebsitePage() {
                 {(data?.sessionsChange || 0) >= 0 ? '+' : ''}{data?.sessionsChange}% vs vorige maand
               </span>
             </div>
-            <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
+            <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200/60">
               <div className="flex items-center justify-between mb-1">
                 <p className="text-2xl font-bold text-slate-900">{data?.bounceRate}%</p>
                 <InfoTooltip text="Het percentage bezoekers dat je website verlaat na slechts één pagina te hebben bekeken, zonder ergens op te klikken. Lager is beter — het betekent dat mensen meer verkennen." />
               </div>
               <p className="text-sm text-slate-500">Bouncepercentage</p>
             </div>
-            <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
+            <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200/60">
               <div className="flex items-center justify-between mb-1">
                 <p className="text-2xl font-bold text-slate-900">{data?.avgDuration}</p>
                 <InfoTooltip text="Hoe lang een bezoeker gemiddeld op je website blijft per bezoek. Langer betekent dat mensen je content interessant vinden. Voor B2B is 2+ minuten een goed teken." />
               </div>
               <p className="text-sm text-slate-500">Gem. sessieduur</p>
             </div>
-            <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
+            <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200/60">
               <div className="flex items-center justify-between mb-1">
                 <p className="text-2xl font-bold text-slate-900">{data?.pagesPerSession}</p>
                 <InfoTooltip text="Hoeveel pagina's een bezoeker gemiddeld bekijkt per bezoek. Meer pagina's = meer betrokkenheid. Voor B2B is 2,5+ pagina's per sessie goed." />
@@ -132,7 +132,7 @@ export default function WebsitePage() {
 
       {/* Sessies + Verkeersbronnen */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white rounded-xl p-5 shadow-sm border border-slate-100">
+        <div className="lg:col-span-2 bg-white rounded-xl p-5 shadow-sm border border-slate-200/60">
           <div className="flex items-center gap-2 mb-4">
             <h3 className="font-semibold text-slate-900 text-sm">Sessies over tijd (14 dagen)</h3>
             <InfoTooltip text="Het aantal bezoeken per dag over de afgelopen 14 dagen. Handig om te zien op welke dagen je het meeste verkeer hebt en of campagnes effect hebben." />
@@ -156,7 +156,7 @@ export default function WebsitePage() {
           )}
         </div>
 
-        <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200/60">
           <div className="flex items-center gap-2 mb-4">
             <h3 className="font-semibold text-slate-900 text-sm">Verkeersbronnen</h3>
             <InfoTooltip text="Hoe bezoekers op je website terechtkomen. Organisch = via Google. Sociaal = via LinkedIn/social media. Direct = URL ingetypt. E-mail = via e-mailcampagne. Betaald = via advertenties." />
@@ -190,7 +190,7 @@ export default function WebsitePage() {
       {/* Nieuw vs Terugkerend + Apparaat + Sessiediepte */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Nieuw vs Terugkerend */}
-        <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200/60">
           <div className="flex items-center gap-2 mb-4">
             <h3 className="font-semibold text-slate-900 text-sm">Nieuw vs Terugkerend</h3>
             <InfoTooltip text="Nieuw = iemand die je website voor het eerst bezoekt. Terugkerend = iemand die al eerder op je site is geweest. Veel terugkerende bezoekers toont loyaliteit en interesse in je merk." />
@@ -221,7 +221,7 @@ export default function WebsitePage() {
         </div>
 
         {/* Apparaattype */}
-        <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200/60">
           <div className="flex items-center gap-2 mb-4">
             <h3 className="font-semibold text-slate-900 text-sm">Apparaattype</h3>
             <InfoTooltip text="Via welk apparaat bezoekers je site bekijken. Voor B2B is Desktop vaak dominant omdat mensen vanuit kantoor browsen. Een hoog mobiel percentage kan duiden op brand awareness verkeer." />
@@ -250,7 +250,7 @@ export default function WebsitePage() {
         </div>
 
         {/* Sessiediepte */}
-        <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200/60">
           <h3 className="font-semibold text-slate-900 text-sm mb-1">Pagina&apos;s per sessie</h3>
           <div className="flex items-center gap-2 mb-4">
             <p className="text-xs text-slate-400">Hoe diep gaan bezoekers in je site?</p>
@@ -273,7 +273,7 @@ export default function WebsitePage() {
       {/* Landen + Zoektermen */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top landen */}
-        <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200/60">
           <div className="flex items-center gap-2 mb-4">
             <Globe size={16} className="text-slate-400" />
             <h3 className="font-semibold text-slate-900 text-sm">Top landen</h3>
@@ -293,7 +293,7 @@ export default function WebsitePage() {
         </div>
 
         {/* Organische zoektermen */}
-        <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200/60">
           <div className="flex items-center gap-2 mb-4">
             <Search size={16} className="text-slate-400" />
             <h3 className="font-semibold text-slate-900 text-sm">Organische zoektermen</h3>
@@ -327,7 +327,7 @@ export default function WebsitePage() {
       </div>
 
       {/* Top pagina's */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200/60 overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <h3 className="font-semibold text-slate-900 text-sm">Toplandingspagina&apos;s</h3>

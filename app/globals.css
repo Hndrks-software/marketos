@@ -5,9 +5,22 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  /* ── Collo-X Brand Kleuren ─────────────────────────────── */
   --color-brand: #91B24A;
   --color-brand-dark: #748E3B;
+  --color-brand-darker: #5A6F2E;
   --color-brand-light: #f2f7e8;
+  --color-brand-muted: #91B24A26;
+
+  --color-accent-blue: #1E3A5F;
+  --color-accent-blue-light: #2A4D7A;
+  --color-accent-blue-dark: #0F1629;
+
+  --color-surface: #F8FAFC;
+  --color-surface-card: #FFFFFF;
+  --color-surface-elevated: #FFFFFF;
+
+  /* ── Shadcn/Theme ──────────────────────────────────────── */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
@@ -52,7 +65,7 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
+  --background: #F8FAFC;
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
@@ -125,9 +138,23 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-surface text-foreground;
   }
   html {
-    @apply font-sans;
+    @apply font-sans antialiased;
   }
+}
+
+/* ── Gradient utility classes ──────────────────────────────── */
+.gradient-brand {
+  background: linear-gradient(135deg, #91B24A 0%, #748E3B 100%);
+}
+.gradient-sidebar {
+  background: linear-gradient(180deg, #1E3A5F 0%, #0F1629 100%);
+}
+.gradient-hero {
+  background: linear-gradient(135deg, #1E3A5F 0%, #0F1629 50%, #1a2d47 100%);
+}
+.gradient-card-dark {
+  background: linear-gradient(135deg, #1E3A5F 0%, #162d4a 50%, #0F1629 100%);
 }

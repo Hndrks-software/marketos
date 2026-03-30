@@ -159,7 +159,7 @@ export default function Dashboard() {
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
+        <div className="bg-white rounded-xl p-5 border border-slate-200/60 shadow-sm">
           <h3 className="font-semibold text-slate-900 text-sm mb-4">LinkedIn Bereik (wekelijks)</h3>
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={weeklyReach}>
@@ -172,7 +172,7 @@ export default function Dashboard() {
           </ResponsiveContainer>
         </div>
 
-        <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
+        <div className="bg-white rounded-xl p-5 border border-slate-200/60 shadow-sm">
           <h3 className="font-semibold text-slate-900 text-sm mb-4">Websitebezoekers (14 dagen)</h3>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={mockDailyVisitors}>
@@ -188,7 +188,7 @@ export default function Dashboard() {
 
       {/* Lead Sources + Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
+        <div className="bg-white rounded-xl p-5 border border-slate-200/60 shadow-sm">
           <h3 className="font-semibold text-slate-900 text-sm mb-4">Leadbronnen</h3>
           <ResponsiveContainer width="100%" height={180}>
             <PieChart>
