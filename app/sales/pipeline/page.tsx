@@ -272,6 +272,15 @@ export default function PipelinePage() {
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(val)
 
+  /* ──── Helper: find which stage a lead or column id belongs to ──── */
+  const findStageId = (id: string): string | null => {
+    // Direct stage id?
+    if (stages.find(s => s.id === id)) return id
+    // It's a lead id — find which stage it's in
+    const lead = leads.find(l => l.id === id)
+    return lead?.stage_id || null
+  }
+
   /* ──── Drag handlers ──── */
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string)
@@ -284,13 +293,12 @@ export default function PipelinePage() {
     if (!over) return
 
     const leadId = active.id as string
-    const newStageId = over.id as string
-
-    // Check if dropped on a stage column
-    if (!stages.find(s => s.id === newStageId)) return
-
     const lead = leads.find(l => l.id === leadId)
-    if (!lead || lead.stage_id === newStageId) return
+    if (!lead) return
+
+    // Resolve the target stage (could be dropped on a column OR on another card)
+    const newStageId = findStageId(over.id as string)
+    if (!newStageId || lead.stage_id === newStageId) return
 
     // Optimistic update
     setLeads(prev => prev.map(l => l.id === leadId ? { ...l, stage_id: newStageId } : l))
@@ -320,7 +328,18 @@ export default function PipelinePage() {
   }
 
   const handleDragOver = (event: DragOverEvent) => {
-    // Could be used for preview effects
+    const { active, over } = event
+    if (!over) return
+
+    const activeLeadId = active.id as string
+    const activeLead = leads.find(l => l.id === activeLeadId)
+    if (!activeLead) return
+
+    const overStageId = findStageId(over.id as string)
+    if (!overStageId || activeLead.stage_id === overStageId) return
+
+    // Live preview: move lead to the new column while dragging
+    setLeads(prev => prev.map(l => l.id === activeLeadId ? { ...l, stage_id: overStageId } : l))
   }
 
   const handleLeadCreated = (lead: Lead) => {
