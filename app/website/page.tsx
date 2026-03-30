@@ -7,6 +7,7 @@ import {
   BarChart, Bar, LineChart, Line,
 } from 'recharts'
 import { Loader2, Globe, Monitor, Smartphone, Tablet, Search, TrendingUp } from 'lucide-react'
+import InfoTooltip from '@/components/ui/InfoTooltip'
 
 interface GA4Data {
   dailySessions: { date: string; visitors: number }[]
@@ -73,9 +74,12 @@ export default function WebsitePage() {
       <div className="grid grid-cols-2 xl:grid-cols-5 gap-4">
         {/* Live bezoekers */}
         <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-xs text-emerald-600 font-medium">Live</span>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-xs text-emerald-600 font-medium">Live</span>
+            </div>
+            <InfoTooltip text="Het aantal mensen dat op dit moment actief op je website is. Wordt elke 30 seconden automatisch ververst." />
           </div>
           <p className="text-3xl font-bold text-slate-900 mb-1">
             {liveCount === null ? '—' : liveCount}
@@ -88,22 +92,34 @@ export default function WebsitePage() {
         ) : (
           <>
             <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
-              <p className="text-2xl font-bold text-slate-900 mb-1">{data?.totalSessions.toLocaleString('nl-NL')}</p>
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-2xl font-bold text-slate-900">{data?.totalSessions.toLocaleString('nl-NL')}</p>
+                <InfoTooltip text="Een sessie is één bezoek aan je website. Eén persoon kan meerdere sessies hebben op één dag, bijvoorbeeld als hij na een uur terugkomt." />
+              </div>
               <p className="text-sm text-slate-500 mb-2">Sessies (30 dagen)</p>
               <span className={`text-xs font-medium ${(data?.sessionsChange || 0) >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
                 {(data?.sessionsChange || 0) >= 0 ? '+' : ''}{data?.sessionsChange}% vs vorige maand
               </span>
             </div>
             <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
-              <p className="text-2xl font-bold text-slate-900 mb-1">{data?.bounceRate}%</p>
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-2xl font-bold text-slate-900">{data?.bounceRate}%</p>
+                <InfoTooltip text="Het percentage bezoekers dat je website verlaat na slechts één pagina te hebben bekeken, zonder ergens op te klikken. Lager is beter — het betekent dat mensen meer verkennen." />
+              </div>
               <p className="text-sm text-slate-500">Bouncepercentage</p>
             </div>
             <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
-              <p className="text-2xl font-bold text-slate-900 mb-1">{data?.avgDuration}</p>
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-2xl font-bold text-slate-900">{data?.avgDuration}</p>
+                <InfoTooltip text="Hoe lang een bezoeker gemiddeld op je website blijft per bezoek. Langer betekent dat mensen je content interessant vinden. Voor B2B is 2+ minuten een goed teken." />
+              </div>
               <p className="text-sm text-slate-500">Gem. sessieduur</p>
             </div>
             <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
-              <p className="text-2xl font-bold text-slate-900 mb-1">{data?.pagesPerSession}</p>
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-2xl font-bold text-slate-900">{data?.pagesPerSession}</p>
+                <InfoTooltip text="Hoeveel pagina's een bezoeker gemiddeld bekijkt per bezoek. Meer pagina's = meer betrokkenheid. Voor B2B is 2,5+ pagina's per sessie goed." />
+              </div>
               <p className="text-sm text-slate-500">Pagina&apos;s per sessie</p>
             </div>
           </>
@@ -113,7 +129,10 @@ export default function WebsitePage() {
       {/* Sessies + Verkeersbronnen */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 bg-white rounded-xl p-5 shadow-sm border border-slate-100">
-          <h3 className="font-semibold text-slate-900 text-sm mb-4">Sessies over tijd (14 dagen)</h3>
+          <div className="flex items-center gap-2 mb-4">
+            <h3 className="font-semibold text-slate-900 text-sm">Sessies over tijd (14 dagen)</h3>
+            <InfoTooltip text="Het aantal bezoeken per dag over de afgelopen 14 dagen. Handig om te zien op welke dagen je het meeste verkeer hebt en of campagnes effect hebben." />
+          </div>
           {loading ? <div className="flex items-center justify-center h-56"><Loader2 size={24} className="animate-spin text-indigo-300" /></div> : (
             <ResponsiveContainer width="100%" height={220}>
               <AreaChart data={data?.dailySessions || []}>
@@ -134,7 +153,10 @@ export default function WebsitePage() {
         </div>
 
         <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
-          <h3 className="font-semibold text-slate-900 text-sm mb-4">Verkeersbronnen</h3>
+          <div className="flex items-center gap-2 mb-4">
+            <h3 className="font-semibold text-slate-900 text-sm">Verkeersbronnen</h3>
+            <InfoTooltip text="Hoe bezoekers op je website terechtkomen. Organisch = via Google. Sociaal = via LinkedIn/social media. Direct = URL ingetypt. E-mail = via e-mailcampagne. Betaald = via advertenties." />
+          </div>
           {loading ? <div className="flex items-center justify-center h-40"><Loader2 size={20} className="animate-spin text-indigo-300" /></div> : (
             <>
               <ResponsiveContainer width="100%" height={150}>
@@ -165,7 +187,10 @@ export default function WebsitePage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Nieuw vs Terugkerend */}
         <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
-          <h3 className="font-semibold text-slate-900 text-sm mb-4">Nieuw vs Terugkerend</h3>
+          <div className="flex items-center gap-2 mb-4">
+            <h3 className="font-semibold text-slate-900 text-sm">Nieuw vs Terugkerend</h3>
+            <InfoTooltip text="Nieuw = iemand die je website voor het eerst bezoekt. Terugkerend = iemand die al eerder op je site is geweest. Veel terugkerende bezoekers toont loyaliteit en interesse in je merk." />
+          </div>
           {loading ? <div className="flex items-center justify-center h-40"><Loader2 size={20} className="animate-spin text-indigo-300" /></div> : (
             <>
               <ResponsiveContainer width="100%" height={140}>
@@ -193,7 +218,10 @@ export default function WebsitePage() {
 
         {/* Apparaattype */}
         <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
-          <h3 className="font-semibold text-slate-900 text-sm mb-4">Apparaattype</h3>
+          <div className="flex items-center gap-2 mb-4">
+            <h3 className="font-semibold text-slate-900 text-sm">Apparaattype</h3>
+            <InfoTooltip text="Via welk apparaat bezoekers je site bekijken. Voor B2B is Desktop vaak dominant omdat mensen vanuit kantoor browsen. Een hoog mobiel percentage kan duiden op brand awareness verkeer." />
+          </div>
           {loading ? <div className="flex items-center justify-center h-40"><Loader2 size={20} className="animate-spin text-indigo-300" /></div> : (
             <div className="space-y-4 mt-2">
               {(data?.deviceBreakdown || []).map(d => {
@@ -220,7 +248,10 @@ export default function WebsitePage() {
         {/* Sessiediepte */}
         <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
           <h3 className="font-semibold text-slate-900 text-sm mb-1">Pagina&apos;s per sessie</h3>
-          <p className="text-xs text-slate-400 mb-4">Hoe diep gaan bezoekers in je site?</p>
+          <div className="flex items-center gap-2 mb-4">
+            <p className="text-xs text-slate-400">Hoe diep gaan bezoekers in je site?</p>
+            <InfoTooltip text="Het gemiddeld aantal pagina's dat een bezoeker bekijkt per sessie. Een stijgende lijn betekent dat mensen steeds meer pagina's verkennen — een teken dat je content boeit." />
+          </div>
           {loading ? <div className="flex items-center justify-center h-40"><Loader2 size={20} className="animate-spin text-indigo-300" /></div> : (
             <ResponsiveContainer width="100%" height={160}>
               <LineChart data={data?.sessionDepth || []}>
@@ -242,6 +273,7 @@ export default function WebsitePage() {
           <div className="flex items-center gap-2 mb-4">
             <Globe size={16} className="text-slate-400" />
             <h3 className="font-semibold text-slate-900 text-sm">Top landen</h3>
+            <InfoTooltip text="De landen waar je bezoekers vandaan komen. Handig om te zien of je internationale bereik groeit of dat je traffic voornamelijk lokaal is." />
           </div>
           {loading ? <div className="flex items-center justify-center h-40"><Loader2 size={20} className="animate-spin text-indigo-300" /></div> : (
             <ResponsiveContainer width="100%" height={220}>
@@ -261,6 +293,7 @@ export default function WebsitePage() {
           <div className="flex items-center gap-2 mb-4">
             <Search size={16} className="text-slate-400" />
             <h3 className="font-semibold text-slate-900 text-sm">Organische zoektermen</h3>
+            <InfoTooltip text="De zoekwoorden waarmee mensen je website vinden via Google. Handig voor SEO: je ziet precies wat potentiële klanten zoeken. Let op: Google verbergt veel zoektermen om privacyredenen." />
           </div>
           {loading ? <div className="flex items-center justify-center h-40"><Loader2 size={20} className="animate-spin text-indigo-300" /></div> : (
             (data?.searchTerms || []).length === 0 ? (
@@ -292,7 +325,10 @@ export default function WebsitePage() {
       {/* Top pagina's */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-          <h3 className="font-semibold text-slate-900 text-sm">Toplandingspagina&apos;s</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="font-semibold text-slate-900 text-sm">Toplandingspagina&apos;s</h3>
+            <InfoTooltip text="De pagina's waar bezoekers het meest op binnenkomen. De eerste pagina die ze zien bepaalt hun eerste indruk. Een hoog bouncepercentage op een pagina betekent dat bezoekers snel weer weggaan." />
+          </div>
           <span className="text-xs text-slate-400">30 dagen</span>
         </div>
         {loading ? (
