@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { CloudUpload, CheckCircle, AlertCircle, Loader2, Upload } from 'lucide-react'
+import { CloudUpload, CheckCircle, AlertCircle, Loader2, Upload, Users, Eye, TrendingUp, MousePointerClick } from 'lucide-react'
 import {
-  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, Legend
+  AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer, Legend, LineChart, Line,
 } from 'recharts'
 import { supabase, LinkedInAnalytics } from '@/lib/supabase'
+import InfoTooltip from '@/components/ui/InfoTooltip'
 
 export default function LinkedInPage() {
   const [data, setData] = useState<LinkedInAnalytics[]>([])
@@ -43,9 +44,7 @@ export default function LinkedInPage() {
     setUploadDetail('')
 
     try {
-      // Dynamisch laden van xlsx in de browser (niet server-side)
       const XLSX = await import('xlsx')
-
       const buffer = await file.arrayBuffer()
       const workbook = XLSX.read(buffer, { type: 'array' })
 
@@ -83,7 +82,6 @@ export default function LinkedInPage() {
           }
         }).filter(Boolean) as ImportRow[]
         fileType = 'content'
-
       } else if (name.includes('followers')) {
         const sheet = workbook.Sheets['Nieuwe volgers']
         if (!sheet) throw new Error('Sheet "Nieuwe volgers" niet gevonden')
@@ -91,14 +89,9 @@ export default function LinkedInPage() {
         rows = raw.slice(1).map(r => {
           const date = parseDate(r[0])
           if (!date) return null
-          return {
-            date,
-            new_followers: Math.round(num(r[2])),
-            total_followers: Math.round(num(r[4])),
-          }
+          return { date, new_followers: Math.round(num(r[2])), total_followers: Math.round(num(r[4])) }
         }).filter(Boolean) as ImportRow[]
         fileType = 'followers'
-
       } else if (name.includes('visitors')) {
         const sheet = workbook.Sheets['Statistieken over bezoekers']
         if (!sheet) throw new Error('Sheet "Statistieken over bezoekers" niet gevonden')
@@ -106,19 +99,13 @@ export default function LinkedInPage() {
         rows = raw.slice(1).map(r => {
           const date = parseDate(r[0])
           if (!date) return null
-          return {
-            date,
-            page_views: Math.round(num(r[21])),
-            unique_visitors: Math.round(num(r[24])),
-          }
+          return { date, page_views: Math.round(num(r[21])), unique_visitors: Math.round(num(r[24])) }
         }).filter(Boolean) as ImportRow[]
         fileType = 'visitors'
-
       } else {
         throw new Error('Bestandsnaam niet herkend. Zorg dat de naam "content", "followers" of "visitors" bevat.')
       }
 
-      // Filter rijen met alleen nullen/nul-waarden
       const validRows = rows.filter(r => {
         const vals = Object.entries(r).filter(([k]) => k !== 'date').map(([, v]) => v as number)
         return vals.some(v => v > 0)
@@ -136,15 +123,10 @@ export default function LinkedInPage() {
       const json = await res.json()
 
       if (json.success) {
-        const typeLabel: Record<string, string> = {
-          content: 'Content statistieken',
-          followers: 'Volgers',
-          visitors: 'Bezoekers',
-        }
+        const typeLabel: Record<string, string> = { content: 'Content statistieken', followers: 'Volgers', visitors: 'Bezoekers' }
         setUploadStatus('success')
         setUploadMessage(`✓ ${json.rowsImported} dagen geïmporteerd (${typeLabel[json.fileType] || json.fileType})`)
         setUploadDetail(`Periode: ${json.dateRange.from} t/m ${json.dateRange.to}`)
-        // Herlaad data uit Supabase
         await loadData()
       } else {
         setUploadStatus('error')
@@ -166,10 +148,13 @@ export default function LinkedInPage() {
   }
 
   const last30 = data.slice(-30)
-  const avgEngagement = data.length
-    ? (data.reduce((sum, d) => sum + ((d.reactions || 0) + (d.comments || 0) + (d.shares || 0)), 0) / data.length).toFixed(1)
+  const totalImpressions = data.reduce((s, d) => s + (d.impressions || 0), 0)
+  const totalReactions = data.reduce((s, d) => s + (d.reactions || 0), 0)
+  const totalClicks = data.reduce((s, d) => s + (d.clicks || 0), 0)
+  const latestFollowers = [...data].reverse().find(d => (d.total_followers || 0) > 0)?.total_followers || 0
+  const avgEngagementRate = data.length
+    ? (data.reduce((s, d) => s + (d.engagement_rate || 0), 0) / data.filter(d => d.engagement_rate).length * 100).toFixed(1)
     : '0'
-  const totalImpressions = data.reduce((sum, d) => sum + (d.impressions || 0), 0)
   const top10 = [...data].sort((a, b) => (b.impressions || 0) - (a.impressions || 0)).slice(0, 10)
 
   return (
@@ -177,12 +162,9 @@ export default function LinkedInPage() {
 
       {/* Upload zone */}
       <div
-        className={`border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer ${
-          isDragging
-            ? 'border-indigo-400 bg-indigo-500/5'
-            : 'border-white/10 hover:border-indigo-500/40 hover:bg-white/[0.02]'
+        className={`border-2 border-dashed rounded-xl p-6 text-center transition-all cursor-pointer ${
+          isDragging ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 hover:border-indigo-300 hover:bg-slate-50 bg-white'
         }`}
-        style={{ backgroundColor: isDragging ? undefined : '#1a2035' }}
         onDrop={onDrop}
         onDragOver={e => { e.preventDefault(); setIsDragging(true) }}
         onDragLeave={() => setIsDragging(false)}
@@ -198,136 +180,218 @@ export default function LinkedInPage() {
 
         {uploadStatus === 'loading' ? (
           <div className="flex flex-col items-center gap-3">
-            <div className="w-10 h-10 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-slate-400">Bestand importeren naar Supabase...</p>
+            <div className="w-9 h-9 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+            <p className="text-sm text-slate-500">{uploadMessage}</p>
           </div>
         ) : uploadStatus === 'success' ? (
           <div className="flex flex-col items-center gap-2">
-            <CheckCircle size={36} className="text-emerald-400" />
-            <p className="text-sm font-semibold text-emerald-400">{uploadMessage}</p>
-            {uploadDetail && <p className="text-xs text-slate-500">{uploadDetail}</p>}
-            <p className="text-xs text-slate-600 mt-1">Klik om nog een bestand te uploaden</p>
+            <CheckCircle size={32} className="text-emerald-500" />
+            <p className="text-sm font-semibold text-emerald-600">{uploadMessage}</p>
+            {uploadDetail && <p className="text-xs text-slate-400">{uploadDetail}</p>}
+            <p className="text-xs text-slate-400 mt-1">Klik om nog een bestand te uploaden</p>
           </div>
         ) : uploadStatus === 'error' ? (
           <div className="flex flex-col items-center gap-2">
-            <AlertCircle size={36} className="text-red-400" />
-            <p className="text-sm font-semibold text-red-400">{uploadMessage}</p>
-            {uploadDetail && <p className="text-xs text-slate-500">{uploadDetail}</p>}
-            <p className="text-xs text-slate-600 mt-1">Klik om opnieuw te proberen</p>
+            <AlertCircle size={32} className="text-red-400" />
+            <p className="text-sm font-semibold text-red-500">{uploadMessage}</p>
+            {uploadDetail && <p className="text-xs text-slate-400">{uploadDetail}</p>}
+            <p className="text-xs text-slate-400 mt-1">Klik om opnieuw te proberen</p>
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center">
-              <Upload size={22} className="text-indigo-400" />
+          <div className="flex flex-col items-center gap-2">
+            <div className="w-11 h-11 rounded-xl bg-indigo-50 flex items-center justify-center">
+              <Upload size={20} className="text-indigo-500" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-white">Sleep je LinkedIn exportbestand hier</p>
-              <p className="text-xs text-slate-500 mt-1">of klik om te bladeren · .xls of .xlsx</p>
+              <p className="text-sm font-semibold text-slate-700">Sleep je LinkedIn exportbestand hier</p>
+              <p className="text-xs text-slate-400 mt-0.5">of klik om te bladeren · .xls of .xlsx</p>
             </div>
-            <div className="flex gap-2 mt-1 flex-wrap justify-center">
+            <div className="flex gap-2 flex-wrap justify-center mt-1">
               {['content_...xls', 'followers_...xls', 'visitors_...xls'].map(f => (
-                <span key={f} className="text-xs bg-white/5 text-slate-500 px-2.5 py-1 rounded-full">{f}</span>
+                <span key={f} className="text-xs bg-slate-100 text-slate-500 px-2.5 py-1 rounded-full">{f}</span>
               ))}
             </div>
-            <p className="text-xs text-slate-600">
-              Overlappende data wordt automatisch overschreven — nooit dubbele records
-            </p>
+            <p className="text-xs text-slate-400">Overlappende data wordt automatisch overschreven</p>
           </div>
         )}
       </div>
 
       {/* KPI row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         {[
-          { label: 'Totaal Impressies', value: loading ? '...' : totalImpressions.toLocaleString('nl-NL') },
-          { label: 'Avg. Engagement/dag', value: loading ? '...' : avgEngagement },
-          { label: 'Dagen met data', value: loading ? '...' : data.length.toString() },
           {
-            label: 'Periode',
-            value: loading ? '...' : data.length > 0
-              ? `${data[0].date.slice(5)} – ${data[data.length - 1].date.slice(5)}`
-              : 'Nog geen data',
+            icon: <Eye size={16} className="text-indigo-400" />,
+            label: 'Totaal impressies',
+            value: loading ? '...' : totalImpressions.toLocaleString('nl-NL'),
+            tooltip: 'Het totale aantal keer dat jouw LinkedIn posts zijn weergegeven in de feed van iemand. Hoge impressies betekenen een groot bereik.'
+          },
+          {
+            icon: <MousePointerClick size={16} className="text-indigo-400" />,
+            label: 'Totaal klikken',
+            value: loading ? '...' : totalClicks.toLocaleString('nl-NL'),
+            tooltip: 'Hoe vaak mensen op je posts hebben geklikt — op de link, het bedrijfslogo of om de post uit te vouwen. Klikken tonen echte interesse.'
+          },
+          {
+            icon: <TrendingUp size={16} className="text-indigo-400" />,
+            label: 'Gem. engagement rate',
+            value: loading ? '...' : `${avgEngagementRate}%`,
+            tooltip: 'Het percentage van je bereik dat actief heeft gereageerd (reacties + klikken + comments + shares). Boven 2% is goed voor B2B LinkedIn.'
+          },
+          {
+            icon: <Users size={16} className="text-indigo-400" />,
+            label: 'Totaal volgers',
+            value: loading ? '...' : latestFollowers > 0 ? latestFollowers.toLocaleString('nl-NL') : data.length > 0 ? 'Upload followers' : '—',
+            tooltip: 'Het totale aantal volgers van je LinkedIn bedrijfspagina. Upload het "followers" exportbestand voor de meest actuele cijfers.'
           },
         ].map(kpi => (
-          <div key={kpi.label} className="rounded-xl p-4 border border-white/8" style={{ backgroundColor: '#1a2035' }}>
-            <p className="text-xs text-slate-500 mb-1">{kpi.label}</p>
-            <p className="text-lg font-bold text-white">{kpi.value}</p>
+          <div key={kpi.label} className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center">{kpi.icon}</div>
+              <InfoTooltip text={kpi.tooltip} />
+            </div>
+            <p className="text-2xl font-bold text-slate-900 mb-1">{kpi.value}</p>
+            <p className="text-xs text-slate-500">{kpi.label}</p>
           </div>
         ))}
       </div>
 
       {loading ? (
-        <div className="rounded-xl border border-white/8 flex items-center justify-center h-48" style={{ backgroundColor: '#1a2035' }}>
-          <Loader2 size={24} className="animate-spin text-indigo-400" />
+        <div className="bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center h-48">
+          <Loader2 size={24} className="animate-spin text-indigo-300" />
         </div>
       ) : data.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-white/10 flex flex-col items-center justify-center h-48 gap-3" style={{ backgroundColor: '#1a2035' }}>
-          <CloudUpload size={32} className="text-slate-600" />
+        <div className="bg-white rounded-xl border border-dashed border-slate-200 flex flex-col items-center justify-center h-48 gap-3">
+          <CloudUpload size={32} className="text-slate-300" />
           <div className="text-center">
-            <p className="text-slate-400 text-sm font-medium">Nog geen LinkedIn data</p>
-            <p className="text-slate-600 text-xs mt-1">Upload je eerste exportbestand via het vak hierboven</p>
+            <p className="text-slate-500 text-sm font-medium">Nog geen LinkedIn data</p>
+            <p className="text-slate-400 text-xs mt-1">Upload je eerste exportbestand via het vak hierboven</p>
           </div>
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Impressies chart */}
-            <div className="rounded-xl p-5 border border-white/8" style={{ backgroundColor: '#1a2035' }}>
-              <h3 className="font-semibold text-white text-sm mb-4">Impressies (laatste 30 dagen)</h3>
+          {/* Impressies + Engagement */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 bg-white rounded-xl p-5 shadow-sm border border-slate-100">
+              <div className="flex items-center gap-2 mb-4">
+                <h3 className="font-semibold text-slate-900 text-sm">Impressies over tijd (laatste 30 dagen)</h3>
+                <InfoTooltip text="Het dagelijks bereik van je LinkedIn posts. Pieken zijn vaak nieuwe posts of posts die viral gaan. Een stabiele lijn betekent consistent posten." />
+              </div>
               <ResponsiveContainer width="100%" height={220}>
-                <LineChart data={last30}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
-                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#64748b' }} tickLine={false} axisLine={false} interval={4}
-                    tickFormatter={v => v.slice(5)} />
-                  <YAxis tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false}
-                    tickFormatter={v => `${(v / 1000).toFixed(0)}k`} />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: '#0f1629', border: '1px solid #ffffff15', borderRadius: '8px', fontSize: 12 }}
-                    labelStyle={{ color: '#94a3b8' }}
-                    formatter={(v) => [Number(v).toLocaleString('nl-NL'), 'Impressies']}
-                  />
-                  <Line type="monotone" dataKey="impressions" stroke="#6366F1" strokeWidth={2} dot={false} />
-                </LineChart>
+                <AreaChart data={last30}>
+                  <defs>
+                    <linearGradient id="impGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#6366F1" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#6366F1" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} interval={4} tickFormatter={v => v.slice(5)} />
+                  <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
+                  <Tooltip contentStyle={{ border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: 12 }} formatter={(v) => [Number(v).toLocaleString('nl-NL'), 'Impressies']} />
+                  <Area type="monotone" dataKey="impressions" stroke="#6366F1" strokeWidth={2} fill="url(#impGrad)" />
+                </AreaChart>
               </ResponsiveContainer>
             </div>
 
-            {/* Engagement chart */}
-            <div className="rounded-xl p-5 border border-white/8" style={{ backgroundColor: '#1a2035' }}>
-              <h3 className="font-semibold text-white text-sm mb-4">Engagement (laatste 30 dagen)</h3>
+            <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
+              <div className="flex items-center gap-2 mb-4">
+                <h3 className="font-semibold text-slate-900 text-sm">Engagement totalen</h3>
+                <InfoTooltip text="De totale som van alle interacties over de gehele periode. Reacties tonen emotionele betrokkenheid, shares vergroten je bereik, comments starten gesprekken." />
+              </div>
+              <div className="space-y-4 mt-2">
+                {[
+                  { label: 'Reacties', value: totalReactions, color: '#6366F1' },
+                  { label: 'Klikken', value: totalClicks, color: '#8B5CF6' },
+                  { label: 'Comments', value: data.reduce((s, d) => s + (d.comments || 0), 0), color: '#10B981' },
+                  { label: 'Shares', value: data.reduce((s, d) => s + (d.shares || 0), 0), color: '#F59E0B' },
+                ].map(item => {
+                  const max = Math.max(totalReactions, totalClicks, data.reduce((s, d) => s + (d.comments || 0), 0), data.reduce((s, d) => s + (d.shares || 0), 0), 1)
+                  return (
+                    <div key={item.label}>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-sm text-slate-700">{item.label}</span>
+                        <span className="text-sm font-semibold text-slate-800">{item.value.toLocaleString('nl-NL')}</span>
+                      </div>
+                      <div className="w-full bg-slate-100 rounded-full h-1.5">
+                        <div className="h-1.5 rounded-full transition-all" style={{ width: `${Math.round((item.value / max) * 100)}%`, backgroundColor: item.color }} />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Engagement chart + Volgers */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
+              <div className="flex items-center gap-2 mb-4">
+                <h3 className="font-semibold text-slate-900 text-sm">Dagelijkse engagement (laatste 30 dagen)</h3>
+                <InfoTooltip text="Hoe actief je publiek dagelijks reageert op je posts. Hoge pieken zijn vaak reacties op een succesvolle post. Een constante lijn toont een betrokken vaste doelgroep." />
+              </div>
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={last30}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
-                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#64748b' }} tickLine={false} axisLine={false} interval={4}
-                    tickFormatter={v => v.slice(5)} />
-                  <YAxis tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false} />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: '#0f1629', border: '1px solid #ffffff15', borderRadius: '8px', fontSize: 12 }}
-                    labelStyle={{ color: '#94a3b8' }}
-                  />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} interval={4} tickFormatter={v => v.slice(5)} />
+                  <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
+                  <Tooltip contentStyle={{ border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: 12 }} />
                   <Legend wrapperStyle={{ fontSize: 11, color: '#64748b' }} />
                   <Bar dataKey="reactions" stackId="a" fill="#6366F1" name="Reacties" />
                   <Bar dataKey="comments" stackId="a" fill="#8B5CF6" name="Comments" />
-                  <Bar dataKey="shares" stackId="a" fill="#A78BFA" radius={[4, 4, 0, 0]} name="Shares" />
+                  <Bar dataKey="shares" stackId="a" fill="#10B981" radius={[4, 4, 0, 0]} name="Shares" />
                 </BarChart>
               </ResponsiveContainer>
+            </div>
+
+            <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
+              <div className="flex items-center gap-2 mb-4">
+                <h3 className="font-semibold text-slate-900 text-sm">Nieuwe volgers per dag (laatste 30 dagen)</h3>
+                <InfoTooltip text="Hoeveel nieuwe mensen je pagina dagelijks gaan volgen. Pieken zijn vaak gekoppeld aan een virale post of actieve campagne. Upload het 'followers' bestand voor deze data." />
+              </div>
+              {last30.some(d => (d.new_followers || 0) > 0) ? (
+                <ResponsiveContainer width="100%" height={220}>
+                  <AreaChart data={last30}>
+                    <defs>
+                      <linearGradient id="follGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10B981" stopOpacity={0.2} />
+                        <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                    <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} interval={4} tickFormatter={v => v.slice(5)} />
+                    <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
+                    <Tooltip contentStyle={{ border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: 12 }} formatter={(v) => [v, 'Nieuwe volgers']} />
+                    <Area type="monotone" dataKey="new_followers" stroke="#10B981" strokeWidth={2} fill="url(#follGrad)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-48 gap-2">
+                  <Users size={28} className="text-slate-200" />
+                  <p className="text-sm text-slate-400 text-center">Upload het <span className="font-medium text-slate-500">followers</span> exportbestand<br />voor volgers-data</p>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Top 10 tabel */}
-          <div className="rounded-xl border border-white/8 overflow-hidden" style={{ backgroundColor: '#1a2035' }}>
-            <div className="px-6 py-4 border-b border-white/8">
-              <h3 className="font-semibold text-white text-sm">Top 10 — Hoogste Bereik</h3>
+          <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold text-slate-900 text-sm">Top 10 — Beste dagen op bereik</h3>
+                <InfoTooltip text="De 10 dagen waarop je posts het meeste bereik hadden. Gebruik dit om te zien op welke dag/moment je posts het best presteren en stem je contentkalender daarop af." />
+              </div>
+              <span className="text-xs text-slate-400">Alle data</span>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-white/5">
+                  <tr className="border-b border-slate-100">
                     {['Datum', 'Impressies', 'Klikken', 'Reacties', 'Comments', 'Shares', 'Eng. Rate'].map(h => (
-                      <th key={h} className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">{h}</th>
+                      <th key={h} className="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide">{h}</th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/4">
+                <tbody className="divide-y divide-slate-50">
                   {top10.map((row, i) => {
                     const reactions = row.reactions || 0
                     const comments = row.comments || 0
@@ -339,15 +403,15 @@ export default function LinkedInPage() {
                         ? (((reactions + comments + shares) / impressions) * 100).toFixed(2)
                         : '0'
                     return (
-                      <tr key={row.id || i} className="hover:bg-white/[0.02] transition-colors">
-                        <td className="px-6 py-3 font-medium text-slate-300">{row.date}</td>
-                        <td className="px-6 py-3 text-slate-400">{impressions.toLocaleString('nl-NL')}</td>
-                        <td className="px-6 py-3 text-slate-400">{(row.clicks || 0).toLocaleString('nl-NL')}</td>
-                        <td className="px-6 py-3 text-slate-400">{reactions.toLocaleString('nl-NL')}</td>
-                        <td className="px-6 py-3 text-slate-400">{comments.toLocaleString('nl-NL')}</td>
-                        <td className="px-6 py-3 text-slate-400">{shares.toLocaleString('nl-NL')}</td>
+                      <tr key={row.id || i} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-6 py-3 font-medium text-slate-700">{row.date}</td>
+                        <td className="px-6 py-3 text-slate-600">{impressions.toLocaleString('nl-NL')}</td>
+                        <td className="px-6 py-3 text-slate-600">{(row.clicks || 0).toLocaleString('nl-NL')}</td>
+                        <td className="px-6 py-3 text-slate-600">{reactions.toLocaleString('nl-NL')}</td>
+                        <td className="px-6 py-3 text-slate-600">{comments.toLocaleString('nl-NL')}</td>
+                        <td className="px-6 py-3 text-slate-600">{shares.toLocaleString('nl-NL')}</td>
                         <td className="px-6 py-3">
-                          <span className="text-xs font-medium text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full">{engRate}%</span>
+                          <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">{engRate}%</span>
                         </td>
                       </tr>
                     )
