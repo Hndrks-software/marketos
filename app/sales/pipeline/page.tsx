@@ -374,19 +374,8 @@ export default function PipelinePage() {
     }
   }
 
-  const handleDragOver = (event: DragOverEvent) => {
-    const { active, over } = event
-    if (!over) return
-
-    const activeLeadId = active.id as string
-    const activeLead = leads.find(l => l.id === activeLeadId)
-    if (!activeLead) return
-
-    const overStageId = findStageId(over.id as string)
-    if (!overStageId || activeLead.stage_id === overStageId) return
-
-    // Live preview: move lead to the new column while dragging
-    setLeads(prev => prev.map(l => l.id === activeLeadId ? { ...l, stage_id: overStageId } : l))
+  const handleDragOver = () => {
+    // Visual feedback is handled by DroppableColumn isOver highlight
   }
 
   const handleLeadCreated = (lead: Lead) => {
