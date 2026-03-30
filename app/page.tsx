@@ -9,7 +9,7 @@ import {
 import KPICard from '@/components/dashboard/KPICard'
 import ActivityFeed from '@/components/dashboard/ActivityFeed'
 import { supabase, Post, Lead, LinkedInAnalytics } from '@/lib/supabase'
-import { mockWeeklyReach, mockDailyVisitors, mockLeadSources, mockPosts, mockLeads, mockLinkedInAnalytics } from '@/lib/mockData'
+import { mockDailyVisitors } from '@/lib/mockData'
 
 interface DashboardData {
   posts: Post[]
@@ -18,7 +18,7 @@ interface DashboardData {
 }
 
 function buildWeeklyReach(analytics: LinkedInAnalytics[]) {
-  if (analytics.length === 0) return mockWeeklyReach
+  if (analytics.length === 0) return []
   const sorted = [...analytics].sort((a, b) => a.date.localeCompare(b.date))
   const weeks: { week: string; reach: number }[] = []
   for (let i = 0; i < sorted.length; i += 7) {
@@ -43,9 +43,9 @@ export default function Dashboard() {
       ])
 
       setData({
-        posts: (postsRes.data && postsRes.data.length > 0) ? postsRes.data as Post[] : mockPosts as Post[],
-        leads: (leadsRes.data && leadsRes.data.length > 0) ? leadsRes.data as Lead[] : mockLeads as Lead[],
-        analytics: (analyticsRes.data && analyticsRes.data.length > 0) ? analyticsRes.data as LinkedInAnalytics[] : mockLinkedInAnalytics,
+        posts: (postsRes.data || []) as Post[],
+        leads: (leadsRes.data || []) as Lead[],
+        analytics: (analyticsRes.data || []) as LinkedInAnalytics[],
       })
       setLoading(false)
     }
@@ -93,13 +93,11 @@ export default function Dashboard() {
   const sourceLabels: Record<string, string> = {
     linkedin: 'LinkedIn', website: 'Website', direct: 'Direct', other: 'Overig',
   }
-  const leadSourceData = leads.length > 0
-    ? Object.entries(sourceCount).map(([key, val]) => ({
-        name: sourceLabels[key] || key,
-        value: Math.round((val / leads.length) * 100),
-        color: sourceColors[key] || '#DDD6FE',
-      }))
-    : mockLeadSources
+  const leadSourceData = Object.entries(sourceCount).map(([key, val]) => ({
+    name: sourceLabels[key] || key,
+    value: Math.round((val / leads.length) * 100),
+    color: sourceColors[key] || '#DDD6FE',
+  }))
 
   const weeklyReach = buildWeeklyReach(analytics)
 

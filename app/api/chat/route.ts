@@ -1,25 +1,68 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { createClient } from '@supabase/supabase-js'
 
 const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 })
 
-const systemPrompt = `Je bent een expert B2B marketing adviseur voor het MarketOS platform. De gebruiker heeft de volgende recente data:
-- LinkedIn bereik deze week: 38.200 impressies (+28.5% vs vorige maand)
-- Beste post deze maand: "The anatomy of a viral B2B post" — 15.420 bereik, 8.9% engagement
-- Websitebezoekers deze week: 4.821 sessies (+12.3%)
-- Aantal nieuwe leads: 15 (5 gekwalificeerd, 3 gewonnen)
-- Gemiddelde engagement rate LinkedIn: 5.4%
-- Top kanalen: LinkedIn (42%), Website (28%), Direct (18%)
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+)
+
+async function buildSystemPrompt(): Promise<string> {
+  // Haal echte data op uit Supabase
+  const now = new Date()
+  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  const monthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate()).toISOString().split('T')[0]
+
+  const [analyticsRes, leadsRes, postsRes] = await Promise.all([
+    supabase.from('linkedin_analytics').select('*').gte('date', weekAgo).order('date', { ascending: false }),
+    supabase.from('leads').select('*').order('created_at', { ascending: false }).limit(50),
+    supabase.from('posts').select('*').eq('status', 'live').order('created_at', { ascending: false }).limit(10),
+  ])
+
+  const analytics = analyticsRes.data || []
+  const leads = leadsRes.data || []
+  const livePosts = postsRes.data || []
+
+  // Bereken statistieken
+  const weeklyImpressions = analytics.reduce((s: number, d: { impressions: number }) => s + d.impressions, 0)
+  const weeklyEngagement = analytics.reduce((s: number, d: { reactions: number; comments: number; shares: number }) => s + d.reactions + d.comments + d.shares, 0)
+  const engagementRate = weeklyImpressions > 0 ? ((weeklyEngagement / weeklyImpressions) * 100).toFixed(1) : '0'
+
+  const totalLeads = leads.length
+  const newLeads = leads.filter((l: { status: string }) => l.status === 'new').length
+  const qualifiedLeads = leads.filter((l: { status: string }) => l.status === 'qualified').length
+  const wonLeads = leads.filter((l: { status: string }) => l.status === 'won').length
+
+  const bestPost = livePosts.sort((a: { reach: number }, b: { reach: number }) => b.reach - a.reach)[0]
+
+  return `Je bent een expert B2B marketing adviseur voor het MarketOS platform. Hier is de actuele data van de gebruiker:
+
+LinkedIn (afgelopen 7 dagen):
+- Impressies: ${weeklyImpressions.toLocaleString('nl-NL')}
+- Engagement acties: ${weeklyEngagement.toLocaleString('nl-NL')}
+- Engagement rate: ${engagementRate}%
+${bestPost ? `- Beste post: "${bestPost.title}" — ${bestPost.reach?.toLocaleString('nl-NL') || 0} bereik` : '- Nog geen live posts met bereikdata'}
+
+CRM & Leads:
+- Totaal leads: ${totalLeads}
+- Nieuwe leads: ${newLeads}
+- Gekwalificeerde leads: ${qualifiedLeads}
+- Gewonnen deals: ${wonLeads}
 
 Geef concrete, data-gedreven adviezen. Wees direct en bondig. Gebruik bullet points waar handig. Antwoord altijd in het Nederlands.`
+}
 
 export async function POST(request: Request) {
   try {
     const { messages } = await request.json()
 
+    const systemPrompt = await buildSystemPrompt()
+
     const stream = await client.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: 'claude-sonnet-4-5',
       max_tokens: 1024,
       system: systemPrompt,
       messages: messages.map((m: { role: string; content: string }) => ({

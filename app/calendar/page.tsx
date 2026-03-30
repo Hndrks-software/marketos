@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { Plus, ChevronLeft, ChevronRight, List, CalendarDays, Share2, Globe, Mail, Loader2 } from 'lucide-react'
 import { Post } from '@/lib/supabase'
 import { supabase } from '@/lib/supabase'
-import { mockPosts } from '@/lib/mockData'
 import PostModal from '@/components/calendar/PostModal'
 import { cn } from '@/lib/utils'
 
@@ -47,10 +46,10 @@ export default function CalendarPage() {
       .select('*')
       .order('scheduled_date', { ascending: true })
 
-    if (error || !data || data.length === 0) {
-      setPosts(mockPosts as Post[])
-    } else {
+    if (!error && data) {
       setPosts(data as Post[])
+    } else {
+      setPosts([])
     }
     setLoading(false)
   }

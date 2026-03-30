@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { Plus, ArrowUpDown, X, Loader2 } from 'lucide-react'
 import { Lead, supabase } from '@/lib/supabase'
-import { mockLeads } from '@/lib/mockData'
 import { cn } from '@/lib/utils'
 
 const statusConfig = {
@@ -58,10 +57,10 @@ export default function LeadsPage() {
       .select('*')
       .order('created_at', { ascending: false })
 
-    if (error || !data || data.length === 0) {
-      setLeads(mockLeads as Lead[])
-    } else {
+    if (!error && data) {
       setLeads(data as Lead[])
+    } else {
+      setLeads([])
     }
     setLoading(false)
   }
