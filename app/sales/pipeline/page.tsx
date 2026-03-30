@@ -32,6 +32,7 @@ import { supabase } from '@/lib/supabase'
 import type { Lead, PipelineStage } from '@/lib/supabase'
 import LeadCard from '@/components/sales/LeadCard'
 import LeadDetailPanel from '@/components/sales/LeadDetailPanel'
+import CurrencyInput from '@/components/ui/CurrencyInput'
 
 /* ──────────────────────── Droppable Column Wrapper ──────────────────────── */
 function DroppableColumn({ id, children }: { id: string; children: React.ReactNode }) {
@@ -153,7 +154,7 @@ function NewLeadModal({
             </div>
             <div>
               <label className={labelClass}>Waarde (€)</label>
-              <input className={inputClass} type="number" value={form.estimated_value || ''} onChange={e => setForm(p => ({ ...p, estimated_value: Number(e.target.value) }))} />
+              <CurrencyInput className={inputClass} value={form.estimated_value} onChange={v => setForm(p => ({ ...p, estimated_value: v }))} />
             </div>
             <div>
               <label className={labelClass}>Prioriteit</label>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { X, Phone, Mail, Building2, User, Calendar, MessageSquare, PhoneCall, Mail as MailIcon, Users, ArrowRightLeft, Plus, Trash2, Save } from 'lucide-react'
+import CurrencyInput from '@/components/ui/CurrencyInput'
 import { supabase } from '@/lib/supabase'
 import type { Lead, LeadActivity, PipelineStage } from '@/lib/supabase'
 
@@ -163,7 +164,7 @@ export default function LeadDetailPanel({ lead, stages, onClose, onUpdate, onDel
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className={labelClass}>Geschatte waarde (€)</label>
-                <input className={inputClass} type="number" value={form.estimated_value || 0} onChange={e => setForm(p => ({ ...p, estimated_value: Number(e.target.value) }))} />
+                <CurrencyInput className={inputClass} value={form.estimated_value || 0} onChange={v => setForm(p => ({ ...p, estimated_value: v }))} />
               </div>
               <div>
                 <label className={labelClass}>Prioriteit</label>
