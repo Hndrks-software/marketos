@@ -13,6 +13,7 @@ import {
   Settings,
   LogOut,
   Columns3,
+  BarChart3,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createBrowserClient } from '@supabase/ssr'
@@ -47,6 +48,7 @@ const navSections: NavSection[] = [
   {
     title: 'Sales',
     items: [
+      { href: '/sales/dashboard', icon: BarChart3, label: 'Sales Dashboard' },
       { href: '/sales/pipeline', icon: Columns3, label: 'Pipeline' },
       { href: '/leads', icon: Target, label: 'CRM & Leads' },
     ],
