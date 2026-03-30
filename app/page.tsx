@@ -9,6 +9,7 @@ import {
 import KPICard from '@/components/dashboard/KPICard'
 import ActivityFeed from '@/components/dashboard/ActivityFeed'
 import MarketingTips from '@/components/dashboard/MarketingTips'
+import WeeklyInsights from '@/components/dashboard/WeeklyInsights'
 import { supabase, Post, Lead, LinkedInAnalytics } from '@/lib/supabase'
 import { mockDailyVisitors } from '@/lib/mockData'
 
@@ -117,6 +118,9 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
+      {/* AI Weekanalyse */}
+      <WeeklyInsights />
+
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <KPICard

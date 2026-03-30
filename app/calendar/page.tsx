@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, ChevronLeft, ChevronRight, List, CalendarDays, Share2, Globe, Mail, Loader2, LayoutGrid } from 'lucide-react'
+import { Plus, ChevronLeft, ChevronRight, List, CalendarDays, Share2, Globe, Mail, Loader2, LayoutGrid, Sparkles } from 'lucide-react'
 import { Post } from '@/lib/supabase'
 import { supabase } from '@/lib/supabase'
 import PostModal from '@/components/calendar/PostModal'
@@ -39,6 +39,8 @@ export default function CalendarPage() {
   const [showModal, setShowModal] = useState(false)
   const [editingPost, setEditingPost] = useState<Partial<Post> | undefined>()
   const [defaultStatus, setDefaultStatus] = useState<Post['status']>('idea')
+  const [aiIdeas, setAiIdeas] = useState<{ title: string; content: string; channel: string; tags: string[] }[]>([])
+  const [aiLoading, setAiLoading] = useState(false)
 
   useEffect(() => { loadPosts() }, [])
 
@@ -83,6 +85,28 @@ export default function CalendarPage() {
     setDefaultStatus(status)
     setEditingPost({ status })
     setShowModal(true)
+  }
+
+  const generateIdeas = async () => {
+    setAiLoading(true)
+    try {
+      const res = await fetch('/api/content-ideas', { method: 'POST' })
+      const json = await res.json()
+      if (json.ideas) setAiIdeas(json.ideas)
+    } catch {}
+    setAiLoading(false)
+  }
+
+  const addIdeaAsPost = (idea: { title: string; content: string; channel: string; tags: string[] }) => {
+    setEditingPost({
+      title: idea.title,
+      content: idea.content,
+      channel: (idea.channel || 'linkedin') as Post['channel'],
+      tags: idea.tags || [],
+      status: 'idea',
+    })
+    setShowModal(true)
+    setAiIdeas(prev => prev.filter(i => i.title !== idea.title))
   }
 
   const filteredPosts = channel === 'all' ? posts : posts.filter(p => p.channel === channel)
@@ -331,6 +355,13 @@ export default function CalendarPage() {
             </button>
           </div>
 
+          {/* AI ideeën */}
+          <button onClick={generateIdeas} disabled={aiLoading}
+            className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors disabled:opacity-50">
+            {aiLoading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+            AI Ideeën
+          </button>
+
           {/* New post */}
           <button onClick={() => openNew('idea')}
             className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white rounded-lg hover:opacity-90 transition-opacity"
@@ -339,6 +370,39 @@ export default function CalendarPage() {
           </button>
         </div>
       </div>
+
+      {/* AI Content Ideeën */}
+      {aiIdeas.length > 0 && (
+        <div className="bg-gradient-to-r from-slate-900 to-slate-800 rounded-xl p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles size={16} style={{ color: '#91B24A' }} />
+            <span className="text-sm font-semibold text-white">AI Content Suggesties</span>
+            <span className="text-xs text-slate-400">— gebaseerd op je best presterende posts</span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {aiIdeas.map((idea, i) => (
+              <div key={i} className="bg-white/[0.07] rounded-lg p-4 hover:bg-white/[0.12] transition-colors">
+                <h4 className="text-sm font-medium text-white mb-2 line-clamp-2">{idea.title}</h4>
+                <p className="text-xs text-slate-400 mb-3 line-clamp-3">{idea.content}</p>
+                <div className="flex items-center justify-between">
+                  <div className="flex gap-1">
+                    {(idea.tags || []).slice(0, 2).map(t => (
+                      <span key={t} className="text-xs text-slate-500 bg-white/10 px-1.5 py-0.5 rounded">#{t}</span>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => addIdeaAsPost(idea)}
+                    className="text-xs font-medium px-3 py-1 rounded-md text-white transition-colors"
+                    style={{ backgroundColor: '#91B24A' }}
+                  >
+                    + Toevoegen
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Calendar nav (only in calendar view) */}
       {view === 'calendar' && (

@@ -8,6 +8,7 @@ import {
 } from 'recharts'
 import { supabase, LinkedInAnalytics, LinkedInPost } from '@/lib/supabase'
 import InfoTooltip from '@/components/ui/InfoTooltip'
+import PageInsight from '@/components/ui/PageInsight'
 
 export default function LinkedInPage() {
   const [data, setData] = useState<LinkedInAnalytics[]>([])
@@ -197,6 +198,9 @@ export default function LinkedInPage() {
 
   return (
     <div className="space-y-6">
+
+      {/* AI Inzicht */}
+      {data.length > 0 && <PageInsight page="linkedin" />}
 
       {/* Upload zone */}
       <div

@@ -8,6 +8,7 @@ import {
 } from 'recharts'
 import { Loader2, Globe, Monitor, Smartphone, Tablet, Search, TrendingUp } from 'lucide-react'
 import InfoTooltip from '@/components/ui/InfoTooltip'
+import PageInsight from '@/components/ui/PageInsight'
 
 interface GA4Data {
   dailySessions: { date: string; visitors: number }[]
@@ -64,6 +65,9 @@ export default function WebsitePage() {
 
   return (
     <div className="space-y-6">
+      {/* AI Inzicht */}
+      {!loading && !error && <PageInsight page="website" />}
+
       {error && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-3 text-sm text-amber-700">
           ⚠️ GA4 data kon niet geladen worden. Controleer je environment variables in Netlify.
