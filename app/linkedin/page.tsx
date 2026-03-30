@@ -1,12 +1,11 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { CloudUpload, CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
+import { CloudUpload, CheckCircle, AlertCircle, Loader2, Upload } from 'lucide-react'
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend
 } from 'recharts'
-import { mockLinkedInAnalytics } from '@/lib/mockData'
 import { supabase, LinkedInAnalytics } from '@/lib/supabase'
 
 export default function LinkedInPage() {
@@ -15,46 +14,60 @@ export default function LinkedInPage() {
   const [isDragging, setIsDragging] = useState(false)
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [uploadMessage, setUploadMessage] = useState('')
+  const [uploadDetail, setUploadDetail] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
-    loadData()
-  }, [])
+  useEffect(() => { loadData() }, [])
 
   const loadData = async () => {
     setLoading(true)
-    const { data: rows, error } = await supabase
+    const { data: rows } = await supabase
       .from('linkedin_analytics')
       .select('*')
       .order('date', { ascending: true })
-
-    if (error || !rows || rows.length === 0) {
-      setData(mockLinkedInAnalytics)
-    } else {
-      setData(rows as LinkedInAnalytics[])
-    }
+    setData((rows || []) as LinkedInAnalytics[])
     setLoading(false)
   }
 
   const handleUpload = async (file: File) => {
+    if (!file.name.endsWith('.xls') && !file.name.endsWith('.xlsx')) {
+      setUploadStatus('error')
+      setUploadMessage('Alleen .xls of .xlsx bestanden worden geaccepteerd')
+      setUploadDetail('Download het bestand direct van LinkedIn — geen extra bewerking nodig')
+      return
+    }
+
     setUploadStatus('loading')
+    setUploadMessage('')
+    setUploadDetail('')
+
     const formData = new FormData()
     formData.append('file', file)
 
     try {
-      const res = await fetch('/api/upload', { method: 'POST', body: formData })
+      const res = await fetch('/api/linkedin-import', { method: 'POST', body: formData })
       const json = await res.json()
+
       if (json.success) {
-        setData(json.records as LinkedInAnalytics[])
+        const typeLabel: Record<string, string> = {
+          content: 'Content statistieken',
+          followers: 'Volgers',
+          visitors: 'Bezoekers',
+        }
         setUploadStatus('success')
-        setUploadMessage(`${json.count} records succesvol geladen`)
+        setUploadMessage(`✓ ${json.rowsImported} dagen geïmporteerd (${typeLabel[json.fileType] || json.fileType})`)
+        setUploadDetail(`Periode: ${json.dateRange.from} t/m ${json.dateRange.to}`)
+        // Herlaad data uit Supabase
+        await loadData()
       } else {
         setUploadStatus('error')
         setUploadMessage(json.error || 'Upload mislukt')
+        setUploadDetail('')
       }
     } catch {
       setUploadStatus('error')
-      setUploadMessage('Er is een netwerkfout opgetreden')
+      setUploadMessage('Verbinding mislukt — probeer opnieuw')
+      setUploadDetail('')
     }
   }
 
@@ -62,57 +75,76 @@ export default function LinkedInPage() {
     e.preventDefault()
     setIsDragging(false)
     const file = e.dataTransfer.files[0]
-    if (file && file.name.endsWith('.csv')) handleUpload(file)
+    if (file) handleUpload(file)
   }
 
   const last30 = data.slice(-30)
   const avgEngagement = data.length
-    ? (data.reduce((sum, d) => sum + (d.reactions + d.comments + d.shares), 0) / data.length).toFixed(1)
+    ? (data.reduce((sum, d) => sum + ((d.reactions || 0) + (d.comments || 0) + (d.shares || 0)), 0) / data.length).toFixed(1)
     : '0'
-  const totalImpressions = data.reduce((sum, d) => sum + d.impressions, 0)
-  const top10 = [...data].sort((a, b) => b.impressions - a.impressions).slice(0, 10)
+  const totalImpressions = data.reduce((sum, d) => sum + (d.impressions || 0), 0)
+  const top10 = [...data].sort((a, b) => (b.impressions || 0) - (a.impressions || 0)).slice(0, 10)
 
   return (
     <div className="space-y-6">
+
       {/* Upload zone */}
       <div
-        className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer ${
-          isDragging ? 'border-indigo-400 bg-indigo-50' : 'border-slate-200 bg-white hover:border-indigo-300 hover:bg-indigo-50/30'
+        className={`border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer ${
+          isDragging
+            ? 'border-indigo-400 bg-indigo-500/5'
+            : 'border-white/10 hover:border-indigo-500/40 hover:bg-white/[0.02]'
         }`}
+        style={{ backgroundColor: isDragging ? undefined : '#1a2035' }}
         onDrop={onDrop}
         onDragOver={e => { e.preventDefault(); setIsDragging(true) }}
         onDragLeave={() => setIsDragging(false)}
-        onClick={() => fileInputRef.current?.click()}
+        onClick={() => uploadStatus !== 'loading' && fileInputRef.current?.click()}
       >
-        <input ref={fileInputRef} type="file" accept=".csv" className="hidden"
-          onChange={e => e.target.files?.[0] && handleUpload(e.target.files[0])} />
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".xls,.xlsx"
+          className="hidden"
+          onChange={e => e.target.files?.[0] && handleUpload(e.target.files[0])}
+        />
+
         {uploadStatus === 'loading' ? (
-          <div className="flex flex-col items-center gap-2">
+          <div className="flex flex-col items-center gap-3">
             <div className="w-10 h-10 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-slate-600">Bestand verwerken...</p>
+            <p className="text-sm text-slate-400">Bestand importeren naar Supabase...</p>
           </div>
         ) : uploadStatus === 'success' ? (
           <div className="flex flex-col items-center gap-2">
-            <CheckCircle size={36} className="text-emerald-500" />
-            <p className="text-sm font-medium text-emerald-700">{uploadMessage}</p>
-            <p className="text-xs text-slate-400">Klik om nieuw bestand te uploaden</p>
+            <CheckCircle size={36} className="text-emerald-400" />
+            <p className="text-sm font-semibold text-emerald-400">{uploadMessage}</p>
+            {uploadDetail && <p className="text-xs text-slate-500">{uploadDetail}</p>}
+            <p className="text-xs text-slate-600 mt-1">Klik om nog een bestand te uploaden</p>
           </div>
         ) : uploadStatus === 'error' ? (
           <div className="flex flex-col items-center gap-2">
             <AlertCircle size={36} className="text-red-400" />
-            <p className="text-sm font-medium text-red-600">{uploadMessage}</p>
-            <p className="text-xs text-slate-400">Klik om opnieuw te proberen</p>
+            <p className="text-sm font-semibold text-red-400">{uploadMessage}</p>
+            {uploadDetail && <p className="text-xs text-slate-500">{uploadDetail}</p>}
+            <p className="text-xs text-slate-600 mt-1">Klik om opnieuw te proberen</p>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center">
-              <CloudUpload size={22} className="text-slate-400" />
+            <div className="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center">
+              <Upload size={22} className="text-indigo-400" />
             </div>
             <div>
-              <p className="text-sm font-medium text-slate-700">Sleep je LinkedIn CSV hier naartoe</p>
-              <p className="text-xs text-slate-400 mt-1">of klik om te bladeren · CSV formaat vereist</p>
+              <p className="text-sm font-semibold text-white">Sleep je LinkedIn exportbestand hier</p>
+              <p className="text-xs text-slate-500 mt-1">of klik om te bladeren · .xls of .xlsx</p>
             </div>
-            <p className="text-xs text-slate-300">Verwachte kolommen: Date, Impressions, Clicks, Reactions, Comments, Shares</p>
+            <div className="flex gap-2 mt-1 flex-wrap justify-center">
+              {['content_...xls', 'followers_...xls', 'visitors_...xls'].map(f => (
+                <span key={f} className="text-xs bg-white/5 text-slate-500 px-2.5 py-1 rounded-full">{f}</span>
+              ))}
+            </div>
+            <p className="text-xs text-slate-600">
+              Overlappende data wordt automatisch overschreven — nooit dubbele records
+            </p>
           </div>
         )}
       </div>
@@ -120,46 +152,72 @@ export default function LinkedInPage() {
       {/* KPI row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Totaal Impressies', value: totalImpressions.toLocaleString('nl-NL') },
-          { label: 'Avg. Engagement/dag', value: avgEngagement },
-          { label: 'Datapunten', value: data.length.toString() },
-          { label: 'Periode', value: data.length > 0 ? `${data[0].date} – ${data[data.length - 1].date}` : 'N/A' },
+          { label: 'Totaal Impressies', value: loading ? '...' : totalImpressions.toLocaleString('nl-NL') },
+          { label: 'Avg. Engagement/dag', value: loading ? '...' : avgEngagement },
+          { label: 'Dagen met data', value: loading ? '...' : data.length.toString() },
+          {
+            label: 'Periode',
+            value: loading ? '...' : data.length > 0
+              ? `${data[0].date.slice(5)} – ${data[data.length - 1].date.slice(5)}`
+              : 'Nog geen data',
+          },
         ].map(kpi => (
-          <div key={kpi.label} className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
+          <div key={kpi.label} className="rounded-xl p-4 border border-white/8" style={{ backgroundColor: '#1a2035' }}>
             <p className="text-xs text-slate-500 mb-1">{kpi.label}</p>
-            <p className="text-lg font-bold text-slate-900">{kpi.value}</p>
+            <p className="text-lg font-bold text-white">{kpi.value}</p>
           </div>
         ))}
       </div>
 
       {loading ? (
-        <div className="bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center h-48">
+        <div className="rounded-xl border border-white/8 flex items-center justify-center h-48" style={{ backgroundColor: '#1a2035' }}>
           <Loader2 size={24} className="animate-spin text-indigo-400" />
+        </div>
+      ) : data.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-white/10 flex flex-col items-center justify-center h-48 gap-3" style={{ backgroundColor: '#1a2035' }}>
+          <CloudUpload size={32} className="text-slate-600" />
+          <div className="text-center">
+            <p className="text-slate-400 text-sm font-medium">Nog geen LinkedIn data</p>
+            <p className="text-slate-600 text-xs mt-1">Upload je eerste exportbestand via het vak hierboven</p>
+          </div>
         </div>
       ) : (
         <>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
-              <h3 className="font-semibold text-slate-900 text-sm mb-4">Impressies over tijd</h3>
+            {/* Impressies chart */}
+            <div className="rounded-xl p-5 border border-white/8" style={{ backgroundColor: '#1a2035' }}>
+              <h3 className="font-semibold text-white text-sm mb-4">Impressies (laatste 30 dagen)</h3>
               <ResponsiveContainer width="100%" height={220}>
                 <LineChart data={last30}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} interval={4} />
-                  <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickFormatter={v => `${(v/1000).toFixed(0)}k`} />
-                  <Tooltip contentStyle={{ border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: 12 }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
+                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#64748b' }} tickLine={false} axisLine={false} interval={4}
+                    tickFormatter={v => v.slice(5)} />
+                  <YAxis tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false}
+                    tickFormatter={v => `${(v / 1000).toFixed(0)}k`} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#0f1629', border: '1px solid #ffffff15', borderRadius: '8px', fontSize: 12 }}
+                    labelStyle={{ color: '#94a3b8' }}
+                    formatter={(v: number) => [v.toLocaleString('nl-NL'), 'Impressies']}
+                  />
                   <Line type="monotone" dataKey="impressions" stroke="#6366F1" strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
-            <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
-              <h3 className="font-semibold text-slate-900 text-sm mb-4">Engagement metrics</h3>
+
+            {/* Engagement chart */}
+            <div className="rounded-xl p-5 border border-white/8" style={{ backgroundColor: '#1a2035' }}>
+              <h3 className="font-semibold text-white text-sm mb-4">Engagement (laatste 30 dagen)</h3>
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={last30}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} interval={4} />
-                  <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
-                  <Tooltip contentStyle={{ border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: 12 }} />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
+                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#64748b' }} tickLine={false} axisLine={false} interval={4}
+                    tickFormatter={v => v.slice(5)} />
+                  <YAxis tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#0f1629', border: '1px solid #ffffff15', borderRadius: '8px', fontSize: 12 }}
+                    labelStyle={{ color: '#94a3b8' }}
+                  />
+                  <Legend wrapperStyle={{ fontSize: 11, color: '#64748b' }} />
                   <Bar dataKey="reactions" stackId="a" fill="#6366F1" name="Reacties" />
                   <Bar dataKey="comments" stackId="a" fill="#8B5CF6" name="Comments" />
                   <Bar dataKey="shares" stackId="a" fill="#A78BFA" radius={[4, 4, 0, 0]} name="Shares" />
@@ -168,34 +226,41 @@ export default function LinkedInPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100">
-              <h3 className="font-semibold text-slate-900 text-sm">Top 10 Datums — Hoogste Bereik</h3>
+          {/* Top 10 tabel */}
+          <div className="rounded-xl border border-white/8 overflow-hidden" style={{ backgroundColor: '#1a2035' }}>
+            <div className="px-6 py-4 border-b border-white/8">
+              <h3 className="font-semibold text-white text-sm">Top 10 — Hoogste Bereik</h3>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-slate-100">
-                    {['Datum', 'Impressies', 'Clicks', 'Reacties', 'Comments', 'Shares', 'Eng. Rate'].map(h => (
-                      <th key={h} className="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide">{h}</th>
+                  <tr className="border-b border-white/5">
+                    {['Datum', 'Impressies', 'Klikken', 'Reacties', 'Comments', 'Shares', 'Eng. Rate'].map(h => (
+                      <th key={h} className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">{h}</th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50">
+                <tbody className="divide-y divide-white/4">
                   {top10.map((row, i) => {
-                    const engRate = row.impressions > 0
-                      ? (((row.reactions + row.comments + row.shares) / row.impressions) * 100).toFixed(2)
-                      : '0'
+                    const reactions = row.reactions || 0
+                    const comments = row.comments || 0
+                    const shares = row.shares || 0
+                    const impressions = row.impressions || 0
+                    const engRate = row.engagement_rate != null
+                      ? (row.engagement_rate * 100).toFixed(2)
+                      : impressions > 0
+                        ? (((reactions + comments + shares) / impressions) * 100).toFixed(2)
+                        : '0'
                     return (
-                      <tr key={row.id || i} className="hover:bg-slate-50 transition-colors">
-                        <td className="px-6 py-3 font-medium text-slate-800">{row.date}</td>
-                        <td className="px-6 py-3 text-slate-600">{row.impressions.toLocaleString('nl-NL')}</td>
-                        <td className="px-6 py-3 text-slate-600">{row.clicks.toLocaleString('nl-NL')}</td>
-                        <td className="px-6 py-3 text-slate-600">{row.reactions.toLocaleString('nl-NL')}</td>
-                        <td className="px-6 py-3 text-slate-600">{row.comments.toLocaleString('nl-NL')}</td>
-                        <td className="px-6 py-3 text-slate-600">{row.shares.toLocaleString('nl-NL')}</td>
+                      <tr key={row.id || i} className="hover:bg-white/[0.02] transition-colors">
+                        <td className="px-6 py-3 font-medium text-slate-300">{row.date}</td>
+                        <td className="px-6 py-3 text-slate-400">{impressions.toLocaleString('nl-NL')}</td>
+                        <td className="px-6 py-3 text-slate-400">{(row.clicks || 0).toLocaleString('nl-NL')}</td>
+                        <td className="px-6 py-3 text-slate-400">{reactions.toLocaleString('nl-NL')}</td>
+                        <td className="px-6 py-3 text-slate-400">{comments.toLocaleString('nl-NL')}</td>
+                        <td className="px-6 py-3 text-slate-400">{shares.toLocaleString('nl-NL')}</td>
                         <td className="px-6 py-3">
-                          <span className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">{engRate}%</span>
+                          <span className="text-xs font-medium text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full">{engRate}%</span>
                         </td>
                       </tr>
                     )
