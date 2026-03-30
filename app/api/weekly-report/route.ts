@@ -144,19 +144,19 @@ export async function GET(request: Request) {
 
     if (!toEmail) return Response.json({ error: 'REPORT_EMAIL_TO niet ingesteld' }, { status: 500 })
 
-    const { error: emailError } = await resend.emails.send({
-      from: 'MarketOS <rapport@resend.dev>',
+    const { data: emailData, error: emailError } = await resend.emails.send({
+      from: 'onboarding@resend.dev',
       to: toEmail,
       subject: `📊 Weekrapport MarketOS — ${impressNow.toLocaleString('nl-NL')} impressies ${changeArrow}${Math.abs(impressChange)}%`,
       html,
     })
 
     if (emailError) {
-      console.error('Resend error:', emailError)
-      return Response.json({ error: String(emailError) }, { status: 500 })
+      console.error('Resend error:', JSON.stringify(emailError))
+      return Response.json({ error: emailError }, { status: 500 })
     }
 
-    return Response.json({ success: true, to: toEmail, impressions: impressNow, leads: newLeads })
+    return Response.json({ success: true, to: toEmail, impressions: impressNow, leads: newLeads, emailId: emailData?.id })
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Onbekende fout'
     console.error('Weekly report fout:', msg)
