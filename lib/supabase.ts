@@ -34,6 +34,26 @@ export type LinkedInAnalytics = {
   created_at: string
 }
 
+export type LinkedInPost = {
+  id: string
+  post_url: string
+  post_title: string
+  post_type: string
+  content_type?: string
+  published_date: string
+  audience?: string
+  views: number
+  unique_views?: number
+  clicks: number
+  ctr?: number
+  reactions: number
+  comments: number
+  reposts: number
+  follows?: number
+  engagement_rate?: number
+  created_at: string
+}
+
 export type Lead = {
   id: string
   name: string

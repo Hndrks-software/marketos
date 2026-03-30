@@ -6,11 +6,12 @@ import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend, LineChart, Line,
 } from 'recharts'
-import { supabase, LinkedInAnalytics } from '@/lib/supabase'
+import { supabase, LinkedInAnalytics, LinkedInPost } from '@/lib/supabase'
 import InfoTooltip from '@/components/ui/InfoTooltip'
 
 export default function LinkedInPage() {
   const [data, setData] = useState<LinkedInAnalytics[]>([])
+  const [posts, setPosts] = useState<LinkedInPost[]>([])
   const [loading, setLoading] = useState(true)
   const [isDragging, setIsDragging] = useState(false)
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
@@ -22,11 +23,12 @@ export default function LinkedInPage() {
 
   const loadData = async () => {
     setLoading(true)
-    const { data: rows } = await supabase
-      .from('linkedin_analytics')
-      .select('*')
-      .order('date', { ascending: true })
-    setData((rows || []) as LinkedInAnalytics[])
+    const [analyticsRes, postsRes] = await Promise.all([
+      supabase.from('linkedin_analytics').select('*').order('date', { ascending: true }),
+      supabase.from('linkedin_posts').select('*').order('published_date', { ascending: false }),
+    ])
+    setData((analyticsRes.data || []) as LinkedInAnalytics[])
+    setPosts((postsRes.data || []) as LinkedInPost[])
     setLoading(false)
   }
 
@@ -82,6 +84,42 @@ export default function LinkedInPage() {
           }
         }).filter(Boolean) as ImportRow[]
         fileType = 'content'
+
+        // Ook per-post data importeren uit "Alle bijdragen" sheet
+        const postsSheet = workbook.Sheets['Alle bijdragen']
+        if (postsSheet) {
+          const postsRaw = XLSX.utils.sheet_to_json<string[]>(postsSheet, { header: 1, defval: '' }) as string[][]
+          type PostImportRow = { [key: string]: string | number | null | undefined }
+          const postRows: PostImportRow[] = postsRaw.slice(2).map(r => {
+            const date = parseDate(r[5])
+            if (!date || !r[1]) return null
+            return {
+              post_url: String(r[1]).trim(),
+              post_title: String(r[0]).slice(0, 280),
+              post_type: String(r[2]) || 'Spontaan',
+              content_type: String(r[19]) || null,
+              published_date: date,
+              audience: String(r[8]) || null,
+              views: Math.round(num(r[9])),
+              unique_views: Math.round(num(r[10])),
+              clicks: Math.round(num(r[12])),
+              ctr: Math.round(num(r[13]) * 10000) / 10000,
+              reactions: Math.round(num(r[14])),
+              comments: Math.round(num(r[15])),
+              reposts: Math.round(num(r[16])),
+              follows: Math.round(num(r[17])),
+              engagement_rate: Math.round(num(r[18]) * 10000) / 10000,
+            }
+          }).filter(Boolean) as PostImportRow[]
+
+          if (postRows.length > 0) {
+            await fetch('/api/linkedin-import', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ rows: postRows, fileType: 'content-posts' }),
+            })
+          }
+        }
       } else if (name.includes('followers')) {
         const sheet = workbook.Sheets['Nieuwe volgers']
         if (!sheet) throw new Error('Sheet "Nieuwe volgers" niet gevonden')
@@ -420,6 +458,74 @@ export default function LinkedInPage() {
               </table>
             </div>
           </div>
+
+          {/* Per-post analyse */}
+          {posts.length > 0 && (
+            <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-slate-900 text-sm">Posts — individuele prestaties</h3>
+                  <InfoTooltip text="Elk LinkedIn-bericht apart, gesorteerd op bereik. Zo zie je precies welke posts het best scoren en welk type content (video, tekst, afbeelding) het meest aanslaat bij jouw doelgroep." />
+                </div>
+                <span className="text-xs text-slate-400">{posts.length} posts</span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-100">
+                      {['Post', 'Type', 'Datum', 'Bereik', 'Klikken', 'Reacties', 'Eng. Rate'].map(h => (
+                        <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wide">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {[...posts].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 20).map((post, i) => {
+                      const engPct = post.engagement_rate ? (post.engagement_rate * 100).toFixed(1) : '—'
+                      const maxViews = Math.max(...posts.map(p => p.views || 0), 1)
+                      const barWidth = Math.round(((post.views || 0) / maxViews) * 100)
+                      const typeColors: Record<string, string> = {
+                        'Video': 'text-violet-600 bg-violet-50',
+                        '': 'text-slate-500 bg-slate-100',
+                      }
+                      const typeStyle = typeColors[post.content_type || ''] || 'text-indigo-600 bg-indigo-50'
+                      return (
+                        <tr key={post.id || i} className="hover:bg-slate-50 transition-colors">
+                          <td className="px-4 py-3 max-w-xs">
+                            <div className="flex flex-col gap-1">
+                              <p className="text-slate-700 text-xs font-medium line-clamp-2 leading-relaxed">
+                                {post.post_title?.slice(0, 100) || '—'}
+                              </p>
+                              <div className="w-full bg-slate-100 rounded-full h-1">
+                                <div className="h-1 rounded-full bg-indigo-400" style={{ width: `${barWidth}%` }} />
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            {post.content_type ? (
+                              <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${typeStyle}`}>
+                                {post.content_type}
+                              </span>
+                            ) : <span className="text-slate-400 text-xs">—</span>}
+                          </td>
+                          <td className="px-4 py-3 text-slate-500 text-xs whitespace-nowrap">{post.published_date}</td>
+                          <td className="px-4 py-3 text-slate-700 font-medium">{(post.views || 0).toLocaleString('nl-NL')}</td>
+                          <td className="px-4 py-3 text-slate-600">{(post.clicks || 0).toLocaleString('nl-NL')}</td>
+                          <td className="px-4 py-3 text-slate-600">{(post.reactions || 0).toLocaleString('nl-NL')}</td>
+                          <td className="px-4 py-3">
+                            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                              parseFloat(engPct) >= 5 ? 'text-emerald-600 bg-emerald-50' :
+                              parseFloat(engPct) >= 2 ? 'text-amber-600 bg-amber-50' :
+                              'text-slate-500 bg-slate-100'
+                            }`}>{engPct}%</span>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>

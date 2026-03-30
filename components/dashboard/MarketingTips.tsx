@@ -115,7 +115,7 @@ export default function MarketingTips() {
         setHasLoaded(true)
       }
     } catch (e) {
-      setError('Verbinding mislukt. Probeer het opnieuw.')
+      setError(e instanceof Error ? e.message : 'Verbinding mislukt. Probeer het opnieuw.')
     } finally {
       setLoading(false)
     }

@@ -158,8 +158,8 @@ CATEGORIEËN beschikbaar: "SEO & Content", "LinkedIn", "Lead Generation", "Websi
 Geef ALLEEN de JSON-array terug, geen extra tekst.`
 
     const stream = anthropic.messages.stream({
-      model: 'claude-opus-4-6',
-      max_tokens: 2048,
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1500,
       tools: [
         { type: 'web_search_20260209', name: 'web_search' },
       ],
