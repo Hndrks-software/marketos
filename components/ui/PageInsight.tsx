@@ -31,18 +31,17 @@ export default function PageInsight({ page }: PageInsightProps) {
   const cacheKey = CACHE_PREFIX + page
 
   useEffect(() => {
+    // Laad alleen uit cache, nooit automatisch genereren
     const cached = localStorage.getItem(cacheKey)
     if (cached) {
       try {
         const parsed = JSON.parse(cached)
         if (Date.now() - parsed._cachedAt < CACHE_DURATION) {
           setData(parsed)
-          return
         }
       } catch {}
     }
-    generate()
-  }, [page])
+  }, [page, cacheKey])
 
   const generate = async () => {
     setLoading(true)
@@ -88,7 +87,27 @@ export default function PageInsight({ page }: PageInsightProps) {
     )
   }
 
-  if (!data) return null
+  if (!data) {
+    return (
+      <div className="bg-gradient-to-r from-slate-900 to-slate-800 rounded-xl p-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#91B24A' }}>
+            <Brain size={14} className="text-white" />
+          </div>
+          <span className="text-sm text-slate-300">AI Inzicht beschikbaar</span>
+        </div>
+        <button
+          onClick={generate}
+          disabled={loading}
+          className="flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
+          style={{ backgroundColor: '#91B24A' }}
+        >
+          {loading ? <Loader2 size={13} className="animate-spin" /> : <Lightbulb size={13} />}
+          Genereer inzicht
+        </button>
+      </div>
+    )
+  }
 
   const isLinkedIn = page === 'linkedin'
   const linkedIn = data as LinkedInInsight

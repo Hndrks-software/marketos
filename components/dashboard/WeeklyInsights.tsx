@@ -57,7 +57,7 @@ export default function WeeklyInsights() {
       } catch {}
     }
 
-    // Check cache
+    // Laad alleen uit cache, nooit automatisch genereren
     const cached = localStorage.getItem(CACHE_KEY)
     if (cached) {
       try {
@@ -65,13 +65,9 @@ export default function WeeklyInsights() {
         const age = Date.now() - new Date(parsed.generatedAt).getTime()
         if (age < CACHE_DURATION) {
           setData(parsed)
-          return
         }
       } catch {}
     }
-
-    // Auto-genereer bij eerste bezoek
-    generateInsights()
   }, [])
 
   const generateInsights = async () => {
@@ -166,7 +162,32 @@ export default function WeeklyInsights() {
     )
   }
 
-  if (!data) return null
+  if (!data) {
+    return (
+      <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-6 text-white">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: '#91B24A' }}>
+              <Brain size={20} className="text-white" />
+            </div>
+            <div>
+              <h2 className="font-bold text-lg">AI Weekanalyse</h2>
+              <p className="text-slate-400 text-xs">Klik om je wekelijkse analyse te genereren</p>
+            </div>
+          </div>
+          <button
+            onClick={generateInsights}
+            disabled={loading}
+            className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
+            style={{ backgroundColor: '#91B24A' }}
+          >
+            {loading ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+            Genereer analyse
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   const completedCount = data.actions.filter(a => completedActions.has(a.title)).length
 
