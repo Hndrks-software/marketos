@@ -109,6 +109,11 @@ export default function LeadCard({ lead, onClick }: Props) {
         >
           {priority.label}
         </span>
+        {lead.referred_by && (
+          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-indigo-50 text-indigo-600">
+            via {lead.referred_by}
+          </span>
+        )}
       </div>
     </div>
   )

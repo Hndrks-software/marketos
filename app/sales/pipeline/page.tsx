@@ -76,6 +76,7 @@ function NewLeadModal({
     estimated_value: 0,
     priority: 'medium',
     stage_id: stages[0]?.id || '',
+    referred_by: '',
     notes: '',
   })
   const [saving, setSaving] = useState(false)
@@ -95,6 +96,7 @@ function NewLeadModal({
         estimated_value: form.estimated_value,
         priority: form.priority,
         stage_id: form.stage_id,
+        referred_by: form.referred_by || null,
         status: 'new',
         notes: form.notes,
       })
@@ -141,6 +143,10 @@ function NewLeadModal({
               <label className={labelClass}>Email</label>
               <input className={inputClass} type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} />
             </div>
+          </div>
+          <div>
+            <label className={labelClass}>Via (verwijzer / vertegenwoordiger)</label>
+            <input className={inputClass} value={form.referred_by} onChange={e => setForm(p => ({ ...p, referred_by: e.target.value }))} placeholder="Bijv. Claude Mis, Ruurd Jellema..." />
           </div>
           <div className="grid grid-cols-3 gap-3">
             <div>

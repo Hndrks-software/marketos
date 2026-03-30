@@ -62,6 +62,7 @@ export default function LeadDetailPanel({ lead, stages, onClose, onUpdate, onDel
         estimated_value: form.estimated_value,
         priority: form.priority,
         stage_id: form.stage_id,
+        referred_by: form.referred_by || null,
         next_action: form.next_action,
         next_action_date: form.next_action_date,
         notes: form.notes,
@@ -154,6 +155,13 @@ export default function LeadDetailPanel({ lead, stages, onClose, onUpdate, onDel
                   <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input className={`${inputClass} pl-9`} value={form.phone || ''} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} />
                 </div>
+              </div>
+            </div>
+            <div className="mt-3">
+              <label className={labelClass}>Via (verwijzer / vertegenwoordiger)</label>
+              <div className="relative">
+                <Users size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input className={`${inputClass} pl-9`} value={form.referred_by || ''} onChange={e => setForm(p => ({ ...p, referred_by: e.target.value }))} placeholder="Bijv. Claude Mis, Ruurd Jellema..." />
               </div>
             </div>
           </section>

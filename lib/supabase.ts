@@ -69,6 +69,7 @@ export type Lead = {
   priority: 'low' | 'medium' | 'high'
   next_action: string | null
   next_action_date: string | null
+  referred_by: string | null
   closed_at: string | null
   created_at: string
 }
