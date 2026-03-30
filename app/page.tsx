@@ -8,6 +8,7 @@ import {
 } from 'recharts'
 import KPICard from '@/components/dashboard/KPICard'
 import ActivityFeed from '@/components/dashboard/ActivityFeed'
+import MarketingTips from '@/components/dashboard/MarketingTips'
 import { supabase, Post, Lead, LinkedInAnalytics } from '@/lib/supabase'
 import { mockDailyVisitors } from '@/lib/mockData'
 
@@ -212,6 +213,9 @@ export default function Dashboard() {
           <ActivityFeed posts={posts} leads={leads} />
         </div>
       </div>
+
+      {/* AI Marketing Tips */}
+      <MarketingTips />
     </div>
   )
 }
