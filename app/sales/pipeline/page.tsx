@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import {
   DndContext,
   DragOverlay,
@@ -199,6 +199,48 @@ export default function PipelinePage() {
   const [showNewModal, setShowNewModal] = useState(false)
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
   const [activeId, setActiveId] = useState<string | null>(null)
+  const [undoStack, setUndoStack] = useState<{ leadId: string; fromStageId: string; fromStatus: string }[]>([])
+
+  // Undo met Ctrl+Z / Cmd+Z
+  const handleUndo = useCallback(async () => {
+    setUndoStack(prev => {
+      const last = prev[prev.length - 1]
+      if (!last) return prev
+
+      // Optimistic UI update
+      setLeads(l => l.map(lead =>
+        lead.id === last.leadId
+          ? { ...lead, stage_id: last.fromStageId, status: last.fromStatus as Lead['status'] }
+          : lead
+      ))
+
+      // Supabase update
+      supabase
+        .from('leads')
+        .update({ stage_id: last.fromStageId, status: last.fromStatus })
+        .eq('id', last.leadId)
+        .then(() => {
+          supabase.from('lead_activities').insert({
+            lead_id: last.leadId,
+            type: 'status_change',
+            description: 'Stage teruggedraaid (undo)',
+          })
+        })
+
+      return prev.slice(0, -1)
+    })
+  }, [])
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        e.preventDefault()
+        handleUndo()
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [handleUndo])
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -299,6 +341,11 @@ export default function PipelinePage() {
     // Resolve the target stage (could be dropped on a column OR on another card)
     const newStageId = findStageId(over.id as string)
     if (!newStageId || lead.stage_id === newStageId) return
+
+    // Save to undo stack before changing
+    const oldStageId = lead.stage_id || ''
+    const oldStatus = lead.status
+    setUndoStack(prev => [...prev.slice(-19), { leadId, fromStageId: oldStageId, fromStatus: oldStatus }])
 
     // Optimistic update
     setLeads(prev => prev.map(l => l.id === leadId ? { ...l, stage_id: newStageId } : l))
