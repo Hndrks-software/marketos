@@ -62,6 +62,30 @@ export type Lead = {
   status: 'new' | 'qualified' | 'lost' | 'won'
   estimated_value: number
   notes: string
+  stage_id: string | null
+  contact_person: string | null
+  email: string | null
+  phone: string | null
+  priority: 'low' | 'medium' | 'high'
+  next_action: string | null
+  next_action_date: string | null
+  closed_at: string | null
+  created_at: string
+}
+
+export type PipelineStage = {
+  id: string
+  name: string
+  position: number
+  color: string
+  created_at: string
+}
+
+export type LeadActivity = {
+  id: string
+  lead_id: string
+  type: 'note' | 'call' | 'email' | 'meeting' | 'status_change'
+  description: string
   created_at: string
 }
 

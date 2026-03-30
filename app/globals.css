@@ -158,3 +158,12 @@
 .gradient-card-dark {
   background: linear-gradient(135deg, #1E3A5F 0%, #162d4a 50%, #0F1629 100%);
 }
+
+/* ── Animations ──────────────────────────────────────────── */
+@keyframes slide-in-right {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+.animate-slide-in-right {
+  animation: slide-in-right 0.25s ease-out;
+}

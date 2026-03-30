@@ -9,7 +9,8 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
   '/ai': { title: 'AI Adviseur', subtitle: 'Jouw persoonlijke B2B marketing expert' },
   '/linkedin': { title: 'LinkedIn Analytics', subtitle: 'Analyseer je LinkedIn performance' },
   '/website': { title: 'Website Analytics', subtitle: 'Inzicht in je websiteverkeer' },
-  '/leads': { title: 'CRM & Leads', subtitle: 'Beheer je leads en pipeline' },
+  '/sales/pipeline': { title: 'Sales Pipeline', subtitle: 'Beheer je deals en volg prospects op' },
+  '/leads': { title: 'CRM & Leads', subtitle: 'Beheer je leads en contacten' },
   '/settings': { title: 'Instellingen', subtitle: 'Beheer je account en integraties' },
 }
 

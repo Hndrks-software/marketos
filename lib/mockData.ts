@@ -39,22 +39,24 @@ export const mockLinkedInAnalytics: LinkedInAnalytics[] = Array.from({ length: 5
   }
 })
 
+const leadDefaults = { stage_id: null, contact_person: null, email: null, phone: null, priority: 'medium' as const, next_action: null, next_action_date: null, closed_at: null }
+
 export const mockLeads: Lead[] = [
-  { id: '1', name: 'Emma de Vries', company: 'TechScale BV', source: 'linkedin', status: 'qualified', estimated_value: 24000, notes: 'Interested in full marketing package. Demo scheduled.', created_at: '2024-03-01T10:00:00Z' },
-  { id: '2', name: 'Pieter Janssen', company: 'GrowthHQ', source: 'website', status: 'new', estimated_value: 8500, notes: 'Downloaded our B2B guide. Reached out via contact form.', created_at: '2024-03-05T14:00:00Z' },
-  { id: '3', name: 'Sofia Bergman', company: 'NordSaaS', source: 'linkedin', status: 'won', estimated_value: 36000, notes: 'Closed! Annual contract signed.', created_at: '2024-02-15T09:00:00Z' },
-  { id: '4', name: 'Marcus Weber', company: 'DataDriven GmbH', source: 'direct', status: 'qualified', estimated_value: 18000, notes: 'Referral from existing customer. High intent.', created_at: '2024-03-10T11:00:00Z' },
-  { id: '5', name: 'Laura Smit', company: 'Conversion Lab', source: 'website', status: 'new', estimated_value: 12000, notes: 'Attended webinar, requested pricing.', created_at: '2024-03-15T15:00:00Z' },
-  { id: '6', name: 'Thomas Müller', company: 'B2B Ventures', source: 'linkedin', status: 'lost', estimated_value: 15000, notes: 'Went with competitor. Price sensitivity.', created_at: '2024-02-20T10:00:00Z' },
-  { id: '7', name: 'Anna Kowalski', company: 'ScaleUp Poland', source: 'direct', status: 'qualified', estimated_value: 22000, notes: 'CEO reached out after reading our case study.', created_at: '2024-03-12T09:00:00Z' },
-  { id: '8', name: 'Jeroen van den Berg', company: 'DutchTech', source: 'linkedin', status: 'new', estimated_value: 9500, notes: 'Engaged with 3 posts. Ready for outreach.', created_at: '2024-03-20T16:00:00Z' },
-  { id: '9', name: 'Claire Dubois', company: 'FrenchMarket SAS', source: 'website', status: 'won', estimated_value: 28000, notes: 'Q1 deal closed. Expanding to full retainer.', created_at: '2024-02-10T11:00:00Z' },
-  { id: '10', name: 'Luca Romano', company: 'Milano Digital', source: 'direct', status: 'qualified', estimated_value: 16000, notes: 'Partnership inquiry. Exploring collaboration.', created_at: '2024-03-08T14:00:00Z' },
-  { id: '11', name: 'Nadia Petersen', company: 'NordicGrowth', source: 'linkedin', status: 'new', estimated_value: 11000, notes: 'Commented on case study post.', created_at: '2024-03-22T10:00:00Z' },
-  { id: '12', name: 'Kevin O\'Brien', company: 'Dublin SaaS', source: 'website', status: 'qualified', estimated_value: 19500, notes: 'Product-market fit discussion scheduled.', created_at: '2024-03-18T13:00:00Z' },
-  { id: '13', name: 'Yuki Tanaka', company: 'TokyoB2B', source: 'direct', status: 'lost', estimated_value: 30000, notes: 'Too early stage, revisit in 6 months.', created_at: '2024-02-25T09:00:00Z' },
-  { id: '14', name: 'Rens Hoekstra', company: 'Amsterdam Ventures', source: 'linkedin', status: 'won', estimated_value: 45000, notes: 'Enterprise deal. 12-month contract.', created_at: '2024-01-30T10:00:00Z' },
-  { id: '15', name: 'Sandra Koch', company: 'BerlinGrowth', source: 'website', status: 'new', estimated_value: 7500, notes: 'Newsletter subscriber, clicked pricing CTA.', created_at: '2024-03-25T17:00:00Z' },
+  { id: '1', name: 'Emma de Vries', company: 'TechScale BV', source: 'linkedin', status: 'qualified', estimated_value: 24000, notes: 'Interested in full marketing package. Demo scheduled.', created_at: '2024-03-01T10:00:00Z', ...leadDefaults },
+  { id: '2', name: 'Pieter Janssen', company: 'GrowthHQ', source: 'website', status: 'new', estimated_value: 8500, notes: 'Downloaded our B2B guide. Reached out via contact form.', created_at: '2024-03-05T14:00:00Z', ...leadDefaults },
+  { id: '3', name: 'Sofia Bergman', company: 'NordSaaS', source: 'linkedin', status: 'won', estimated_value: 36000, notes: 'Closed! Annual contract signed.', created_at: '2024-02-15T09:00:00Z', ...leadDefaults },
+  { id: '4', name: 'Marcus Weber', company: 'DataDriven GmbH', source: 'direct', status: 'qualified', estimated_value: 18000, notes: 'Referral from existing customer. High intent.', created_at: '2024-03-10T11:00:00Z', ...leadDefaults },
+  { id: '5', name: 'Laura Smit', company: 'Conversion Lab', source: 'website', status: 'new', estimated_value: 12000, notes: 'Attended webinar, requested pricing.', created_at: '2024-03-15T15:00:00Z', ...leadDefaults },
+  { id: '6', name: 'Thomas Müller', company: 'B2B Ventures', source: 'linkedin', status: 'lost', estimated_value: 15000, notes: 'Went with competitor. Price sensitivity.', created_at: '2024-02-20T10:00:00Z', ...leadDefaults },
+  { id: '7', name: 'Anna Kowalski', company: 'ScaleUp Poland', source: 'direct', status: 'qualified', estimated_value: 22000, notes: 'CEO reached out after reading our case study.', created_at: '2024-03-12T09:00:00Z', ...leadDefaults },
+  { id: '8', name: 'Jeroen van den Berg', company: 'DutchTech', source: 'linkedin', status: 'new', estimated_value: 9500, notes: 'Engaged with 3 posts. Ready for outreach.', created_at: '2024-03-20T16:00:00Z', ...leadDefaults },
+  { id: '9', name: 'Claire Dubois', company: 'FrenchMarket SAS', source: 'website', status: 'won', estimated_value: 28000, notes: 'Q1 deal closed. Expanding to full retainer.', created_at: '2024-02-10T11:00:00Z', ...leadDefaults },
+  { id: '10', name: 'Luca Romano', company: 'Milano Digital', source: 'direct', status: 'qualified', estimated_value: 16000, notes: 'Partnership inquiry. Exploring collaboration.', created_at: '2024-03-08T14:00:00Z', ...leadDefaults },
+  { id: '11', name: 'Nadia Petersen', company: 'NordicGrowth', source: 'linkedin', status: 'new', estimated_value: 11000, notes: 'Commented on case study post.', created_at: '2024-03-22T10:00:00Z', ...leadDefaults },
+  { id: '12', name: 'Kevin O\'Brien', company: 'Dublin SaaS', source: 'website', status: 'qualified', estimated_value: 19500, notes: 'Product-market fit discussion scheduled.', created_at: '2024-03-18T13:00:00Z', ...leadDefaults },
+  { id: '13', name: 'Yuki Tanaka', company: 'TokyoB2B', source: 'direct', status: 'lost', estimated_value: 30000, notes: 'Too early stage, revisit in 6 months.', created_at: '2024-02-25T09:00:00Z', ...leadDefaults },
+  { id: '14', name: 'Rens Hoekstra', company: 'Amsterdam Ventures', source: 'linkedin', status: 'won', estimated_value: 45000, notes: 'Enterprise deal. 12-month contract.', created_at: '2024-01-30T10:00:00Z', ...leadDefaults },
+  { id: '15', name: 'Sandra Koch', company: 'BerlinGrowth', source: 'website', status: 'new', estimated_value: 7500, notes: 'Newsletter subscriber, clicked pricing CTA.', created_at: '2024-03-25T17:00:00Z', ...leadDefaults },
 ]
 
 export const mockWeeklyReach = [

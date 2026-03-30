@@ -12,18 +12,51 @@ import {
   Target,
   Settings,
   LogOut,
+  Columns3,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createBrowserClient } from '@supabase/ssr'
 
-const navItems = [
-  { href: '/', icon: LayoutDashboard, label: 'Dashboard' },
-  { href: '/calendar', icon: CalendarDays, label: 'Content Kalender' },
-  { href: '/ai', icon: Bot, label: 'AI Adviseur' },
-  { href: '/linkedin', icon: Share2, label: 'LinkedIn Analytics' },
-  { href: '/website', icon: Globe, label: 'Website Analytics' },
-  { href: '/leads', icon: Target, label: 'CRM & Leads' },
-  { href: '/settings', icon: Settings, label: 'Instellingen' },
+type NavItem = {
+  href: string
+  icon: React.ComponentType<{ size?: number; className?: string }>
+  label: string
+}
+
+type NavSection = {
+  title: string | null
+  items: NavItem[]
+}
+
+const navSections: NavSection[] = [
+  {
+    title: null,
+    items: [
+      { href: '/', icon: LayoutDashboard, label: 'Dashboard' },
+    ],
+  },
+  {
+    title: 'Marketing',
+    items: [
+      { href: '/calendar', icon: CalendarDays, label: 'Content Kalender' },
+      { href: '/ai', icon: Bot, label: 'AI Adviseur' },
+      { href: '/linkedin', icon: Share2, label: 'LinkedIn Analytics' },
+      { href: '/website', icon: Globe, label: 'Website Analytics' },
+    ],
+  },
+  {
+    title: 'Sales',
+    items: [
+      { href: '/sales/pipeline', icon: Columns3, label: 'Pipeline' },
+      { href: '/leads', icon: Target, label: 'CRM & Leads' },
+    ],
+  },
+  {
+    title: null,
+    items: [
+      { href: '/settings', icon: Settings, label: 'Instellingen' },
+    ],
+  },
 ]
 
 export default function Sidebar() {
@@ -39,6 +72,11 @@ export default function Sidebar() {
     await supabase.auth.signOut()
     router.push('/login')
     router.refresh()
+  }
+
+  const isActive = (href: string) => {
+    if (href === '/') return pathname === '/'
+    return pathname.startsWith(href)
   }
 
   return (
@@ -57,25 +95,36 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-5 space-y-1 overflow-y-auto">
-        {navItems.map(({ href, icon: Icon, label }) => {
-          const isActive = pathname === href
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
-                isActive
-                  ? 'gradient-brand text-white shadow-lg shadow-brand/25'
-                  : 'text-slate-400 hover:text-white hover:bg-white/8'
-              )}
-            >
-              <Icon size={18} className={isActive ? 'text-white' : ''} />
-              {label}
-            </Link>
-          )
-        })}
+      <nav className="flex-1 px-3 py-4 overflow-y-auto">
+        {navSections.map((section, sIdx) => (
+          <div key={sIdx} className={sIdx > 0 ? 'mt-5' : ''}>
+            {section.title && (
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 px-3 mb-2">
+                {section.title}
+              </p>
+            )}
+            <div className="space-y-0.5">
+              {section.items.map(({ href, icon: Icon, label }) => {
+                const active = isActive(href)
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    className={cn(
+                      'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
+                      active
+                        ? 'gradient-brand text-white shadow-lg shadow-brand/25'
+                        : 'text-slate-400 hover:text-white hover:bg-white/8'
+                    )}
+                  >
+                    <Icon size={18} className={active ? 'text-white' : ''} />
+                    {label}
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       {/* Footer */}

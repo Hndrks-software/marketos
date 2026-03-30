@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, ArrowUpDown, X, Loader2 } from 'lucide-react'
-import { Lead, supabase } from '@/lib/supabase'
+import { Plus, ArrowUpDown, X, Loader2, ExternalLink } from 'lucide-react'
+import Link from 'next/link'
+import { Lead, PipelineStage, supabase } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
 
 const statusConfig = {
@@ -39,6 +40,7 @@ const emptyForm: LeadFormData = {
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([])
+  const [stages, setStages] = useState<PipelineStage[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState<LeadFormData>(emptyForm)
@@ -47,22 +49,23 @@ export default function LeadsPage() {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
 
   useEffect(() => {
-    loadLeads()
+    loadData()
   }, [])
 
-  const loadLeads = async () => {
+  const loadData = async () => {
     setLoading(true)
-    const { data, error } = await supabase
-      .from('leads')
-      .select('*')
-      .order('created_at', { ascending: false })
-
-    if (!error && data) {
-      setLeads(data as Lead[])
-    } else {
-      setLeads([])
-    }
+    const [leadsRes, stagesRes] = await Promise.all([
+      supabase.from('leads').select('*').order('created_at', { ascending: false }),
+      supabase.from('pipeline_stages').select('*').order('position'),
+    ])
+    if (leadsRes.data) setLeads(leadsRes.data as Lead[])
+    if (stagesRes.data) setStages(stagesRes.data as PipelineStage[])
     setLoading(false)
+  }
+
+  const getStageLabel = (stageId: string | null) => {
+    if (!stageId) return null
+    return stages.find(s => s.id === stageId)
   }
 
   const handleSort = (col: keyof Lead) => {
@@ -78,8 +81,8 @@ export default function LeadsPage() {
       return sortDir === 'asc' ? cmp : -cmp
     })
 
-  const totalValue = leads.filter(l => l.status === 'won').reduce((s, l) => s + l.estimated_value, 0)
-  const pipelineValue = leads.filter(l => l.status === 'qualified').reduce((s, l) => s + l.estimated_value, 0)
+  const totalValue = leads.filter(l => l.status === 'won').reduce((s, l) => s + (l.estimated_value || 0), 0)
+  const pipelineValue = leads.filter(l => l.status === 'qualified').reduce((s, l) => s + (l.estimated_value || 0), 0)
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -131,14 +134,23 @@ export default function LeadsPage() {
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex gap-1.5">
-          {['all', 'new', 'qualified', 'won', 'lost'].map(s => (
-            <button key={s} onClick={() => setFilterStatus(s)}
-              className={cn('px-3 py-1.5 rounded-lg text-xs font-medium transition-colors', filterStatus === s ? 'text-white' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50')}
-              style={filterStatus === s ? { backgroundColor: 'var(--color-brand)' } : {}}>
-              {s === 'all' ? 'Alle' : statusConfig[s as Lead['status']]?.label}
-            </button>
-          ))}
+        <div className="flex items-center gap-3">
+          <div className="flex gap-1.5">
+            {['all', 'new', 'qualified', 'won', 'lost'].map(s => (
+              <button key={s} onClick={() => setFilterStatus(s)}
+                className={cn('px-3 py-1.5 rounded-lg text-xs font-medium transition-colors', filterStatus === s ? 'text-white' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50')}
+                style={filterStatus === s ? { backgroundColor: 'var(--color-brand)' } : {}}>
+                {s === 'all' ? 'Alle' : statusConfig[s as Lead['status']]?.label}
+              </button>
+            ))}
+          </div>
+          <Link
+            href="/sales/pipeline"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-brand hover:text-brand-dark transition-colors"
+          >
+            <ExternalLink size={13} />
+            Pipeline view
+          </Link>
         </div>
         <button onClick={() => setShowModal(true)}
           className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors hover:opacity-90 bg-brand">
@@ -161,6 +173,7 @@ export default function LeadsPage() {
                     { key: 'company', label: 'Bedrijf' },
                     { key: 'source', label: 'Bron' },
                     { key: 'status', label: 'Status' },
+                    { key: 'stage_id', label: 'Stage' },
                     { key: 'estimated_value', label: 'Waarde' },
                     { key: 'created_at', label: 'Datum' },
                   ].map(col => (
@@ -174,6 +187,7 @@ export default function LeadsPage() {
               <tbody className="divide-y divide-slate-50">
                 {filtered.map(lead => {
                   const cfg = statusConfig[lead.status]
+                  const stage = getStageLabel(lead.stage_id)
                   return (
                     <tr key={lead.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-6 py-3">
@@ -198,7 +212,19 @@ export default function LeadsPage() {
                           ))}
                         </select>
                       </td>
-                      <td className="px-6 py-3 font-medium text-slate-800">€{lead.estimated_value.toLocaleString('nl-NL')}</td>
+                      <td className="px-6 py-3">
+                        {stage ? (
+                          <span
+                            className="text-xs font-medium px-2 py-1 rounded-md"
+                            style={{ backgroundColor: stage.color + '18', color: stage.color }}
+                          >
+                            {stage.name}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-slate-400">—</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-3 font-medium text-slate-800">€{(lead.estimated_value || 0).toLocaleString('nl-NL')}</td>
                       <td className="px-6 py-3 text-slate-500 text-xs">
                         {new Date(lead.created_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </td>
