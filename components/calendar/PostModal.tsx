@@ -8,6 +8,7 @@ interface PostModalProps {
   post?: Partial<Post>
   onClose: () => void
   onSave: (post: Partial<Post>) => void
+  onDelete?: (id: string) => void
 }
 
 const statusOptions = [
@@ -24,7 +25,7 @@ const channelOptions = [
   { value: 'email', label: 'E-mail' },
 ]
 
-export default function PostModal({ post, onClose, onSave }: PostModalProps) {
+export default function PostModal({ post, onClose, onSave, onDelete }: PostModalProps) {
   const [form, setForm] = useState<Partial<Post>>({
     title: '',
     content: '',
@@ -158,6 +159,15 @@ export default function PostModal({ post, onClose, onSave }: PostModalProps) {
           </div>
 
           <div className="flex gap-3 pt-2">
+            {onDelete && form.id && (
+              <button
+                type="button"
+                onClick={() => { if (confirm('Post verwijderen?')) onDelete(form.id!) }}
+                className="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+              >
+                Verwijder
+              </button>
+            )}
             <button
               type="button"
               onClick={onClose}
