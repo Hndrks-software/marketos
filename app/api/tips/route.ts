@@ -2,6 +2,8 @@ import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
 import { JWT } from 'google-auth-library'
 
+export const maxDuration = 60 // Netlify: sta 60 seconden toe voor AI + websearch
+
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY || '',
 })
@@ -158,7 +160,6 @@ Geef ALLEEN de JSON-array terug, geen extra tekst.`
     const stream = anthropic.messages.stream({
       model: 'claude-opus-4-6',
       max_tokens: 2048,
-      thinking: { type: 'adaptive' },
       tools: [
         { type: 'web_search_20260209', name: 'web_search' },
       ],
