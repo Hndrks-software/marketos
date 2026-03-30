@@ -72,8 +72,8 @@ export async function POST(request: Request) {
       fileType,
       rowsImported: rows.length,
       dateRange: {
-        from: rows[0]?.date,
-        to: rows[rows.length - 1]?.date,
+        from: (rows[0] as AnalyticsRow)?.date,
+        to: (rows[rows.length - 1] as AnalyticsRow)?.date,
       },
     })
   } catch (err) {
