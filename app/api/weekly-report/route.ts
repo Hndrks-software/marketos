@@ -145,7 +145,7 @@ export async function GET(request: Request) {
     if (!toEmail) return Response.json({ error: 'REPORT_EMAIL_TO niet ingesteld' }, { status: 500 })
 
     const { data: emailData, error: emailError } = await resend.emails.send({
-      from: 'onboarding@resend.dev',
+      from: 'MarketOS <rapport@florishndrks.com>',
       to: toEmail,
       subject: `📊 Weekrapport MarketOS — ${impressNow.toLocaleString('nl-NL')} impressies ${changeArrow}${Math.abs(impressChange)}%`,
       html,
