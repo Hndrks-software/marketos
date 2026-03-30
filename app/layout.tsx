@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
-import Sidebar from "@/components/layout/Sidebar";
-import TopBar from "@/components/layout/TopBar";
+import LayoutWrapper from "@/components/layout/LayoutWrapper";
 
 const geist = Geist({
   subsets: ["latin"],
@@ -21,11 +20,7 @@ export default function RootLayout({
   return (
     <html lang="nl" className={geist.className}>
       <body style={{ backgroundColor: "#F8FAFC" }}>
-        <Sidebar />
-        <div className="ml-60 min-h-screen flex flex-col">
-          <TopBar />
-          <main className="flex-1 p-6">{children}</main>
-        </div>
+        <LayoutWrapper>{children}</LayoutWrapper>
       </body>
     </html>
   );
