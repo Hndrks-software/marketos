@@ -1,65 +1,125 @@
-import Image from "next/image";
+'use client'
 
-export default function Home() {
+import { Users, MousePointerClick, Target, TrendingUp } from 'lucide-react'
+import {
+  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
+} from 'recharts'
+import KPICard from '@/components/dashboard/KPICard'
+import ActivityFeed from '@/components/dashboard/ActivityFeed'
+import { mockWeeklyReach, mockDailyVisitors, mockLeadSources } from '@/lib/mockData'
+
+export default function Dashboard() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="space-y-6">
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <KPICard
+          title="LinkedIn Bereik"
+          value="38.200"
+          change={28.5}
+          changeLabel="vs. vorige maand"
+          icon={<Users size={20} />}
+          color="#6366F1"
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+        <KPICard
+          title="Website Sessies"
+          value="4.821"
+          change={12.3}
+          changeLabel="vs. vorige maand"
+          icon={<MousePointerClick size={20} />}
+          color="#8B5CF6"
+        />
+        <KPICard
+          title="Nieuwe Leads"
+          value="15"
+          change={-4.2}
+          changeLabel="vs. vorige maand"
+          icon={<Target size={20} />}
+          color="#EC4899"
+        />
+        <KPICard
+          title="Avg. Engagement Rate"
+          value="5.4%"
+          change={8.1}
+          changeLabel="vs. vorige maand"
+          icon={<TrendingUp size={20} />}
+          color="#10B981"
+        />
+      </div>
+
+      {/* Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* LinkedIn reach line chart */}
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
+          <h3 className="font-semibold text-slate-900 text-sm mb-4">LinkedIn Bereik (8 weken)</h3>
+          <ResponsiveContainer width="100%" height={220}>
+            <LineChart data={mockWeeklyReach}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+              <XAxis dataKey="week" tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} tickFormatter={v => `${(v/1000).toFixed(0)}k`} />
+              <Tooltip formatter={(v) => [Number(v).toLocaleString('nl-NL'), 'Bereik']} contentStyle={{ border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: 12 }} />
+              <Line type="monotone" dataKey="reach" stroke="#6366F1" strokeWidth={2.5} dot={{ fill: '#6366F1', r: 3 }} activeDot={{ r: 5 }} />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        {/* Website visitors bar chart */}
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
+          <h3 className="font-semibold text-slate-900 text-sm mb-4">Websitebezoekers (14 dagen)</h3>
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={mockDailyVisitors}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+              <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} />
+              <Tooltip formatter={(v) => [Number(v).toLocaleString('nl-NL'), 'Bezoekers']} contentStyle={{ border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: 12 }} />
+              <Bar dataKey="visitors" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
-      </main>
+      </div>
+
+      {/* Lead Sources Donut + Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Donut chart */}
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100">
+          <h3 className="font-semibold text-slate-900 text-sm mb-4">Leadbronnen</h3>
+          <ResponsiveContainer width="100%" height={180}>
+            <PieChart>
+              <Pie
+                data={mockLeadSources}
+                cx="50%"
+                cy="50%"
+                innerRadius={50}
+                outerRadius={75}
+                paddingAngle={3}
+                dataKey="value"
+              >
+                {mockLeadSources.map((entry, i) => (
+                  <Cell key={i} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip formatter={(v) => [`${v}%`, 'Aandeel']} contentStyle={{ border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: 12 }} />
+            </PieChart>
+          </ResponsiveContainer>
+          <div className="space-y-2 mt-2">
+            {mockLeadSources.map(s => (
+              <div key={s.name} className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: s.color }} />
+                  <span className="text-xs text-slate-600">{s.name}</span>
+                </div>
+                <span className="text-xs font-semibold text-slate-800">{s.value}%</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Activity feed spans 2 columns */}
+        <div className="lg:col-span-2">
+          <ActivityFeed />
+        </div>
+      </div>
     </div>
-  );
+  )
 }
