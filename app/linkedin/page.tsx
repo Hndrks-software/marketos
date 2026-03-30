@@ -30,7 +30,8 @@ export default function LinkedInPage() {
   }
 
   const handleUpload = async (file: File) => {
-    if (!file.name.endsWith('.xls') && !file.name.endsWith('.xlsx')) {
+    const name = file.name.toLowerCase()
+    if (!name.endsWith('.xls') && !name.endsWith('.xlsx')) {
       setUploadStatus('error')
       setUploadMessage('Alleen .xls of .xlsx bestanden worden geaccepteerd')
       setUploadDetail('Download het bestand direct van LinkedIn — geen extra bewerking nodig')
@@ -38,14 +39,100 @@ export default function LinkedInPage() {
     }
 
     setUploadStatus('loading')
-    setUploadMessage('')
+    setUploadMessage('Bestand inlezen...')
     setUploadDetail('')
 
-    const formData = new FormData()
-    formData.append('file', file)
-
     try {
-      const res = await fetch('/api/linkedin-import', { method: 'POST', body: formData })
+      // Dynamisch laden van xlsx in de browser (niet server-side)
+      const XLSX = await import('xlsx')
+
+      const buffer = await file.arrayBuffer()
+      const workbook = XLSX.read(buffer, { type: 'array' })
+
+      function parseDate(raw: string): string | null {
+        if (!raw || typeof raw !== 'string') return null
+        const parts = raw.trim().split('/')
+        if (parts.length !== 3) return null
+        const [month, day, year] = parts
+        return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
+      }
+      function num(val: unknown): number {
+        const n = parseFloat(String(val ?? 0))
+        return isNaN(n) ? 0 : n
+      }
+
+      type ImportRow = { date: string; [key: string]: number | string | null | undefined }
+      let rows: ImportRow[] = []
+      let fileType = 'onbekend'
+
+      if (name.includes('content')) {
+        const sheet = workbook.Sheets['Statistieken']
+        if (!sheet) throw new Error('Sheet "Statistieken" niet gevonden in content bestand')
+        const raw = XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1, defval: '' }) as string[][]
+        rows = raw.slice(2).map(r => {
+          const date = parseDate(r[0])
+          if (!date) return null
+          return {
+            date,
+            impressions: Math.round(num(r[3])),
+            clicks: Math.round(num(r[7])),
+            reactions: Math.round(num(r[10])),
+            comments: Math.round(num(r[13])),
+            shares: Math.round(num(r[16])),
+            engagement_rate: Math.round(num(r[19]) * 100) / 100,
+          }
+        }).filter(Boolean) as ImportRow[]
+        fileType = 'content'
+
+      } else if (name.includes('followers')) {
+        const sheet = workbook.Sheets['Nieuwe volgers']
+        if (!sheet) throw new Error('Sheet "Nieuwe volgers" niet gevonden')
+        const raw = XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1, defval: '' }) as string[][]
+        rows = raw.slice(1).map(r => {
+          const date = parseDate(r[0])
+          if (!date) return null
+          return {
+            date,
+            new_followers: Math.round(num(r[2])),
+            total_followers: Math.round(num(r[4])),
+          }
+        }).filter(Boolean) as ImportRow[]
+        fileType = 'followers'
+
+      } else if (name.includes('visitors')) {
+        const sheet = workbook.Sheets['Statistieken over bezoekers']
+        if (!sheet) throw new Error('Sheet "Statistieken over bezoekers" niet gevonden')
+        const raw = XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1, defval: '' }) as string[][]
+        rows = raw.slice(1).map(r => {
+          const date = parseDate(r[0])
+          if (!date) return null
+          return {
+            date,
+            page_views: Math.round(num(r[21])),
+            unique_visitors: Math.round(num(r[24])),
+          }
+        }).filter(Boolean) as ImportRow[]
+        fileType = 'visitors'
+
+      } else {
+        throw new Error('Bestandsnaam niet herkend. Zorg dat de naam "content", "followers" of "visitors" bevat.')
+      }
+
+      // Filter rijen met alleen nullen/nul-waarden
+      const validRows = rows.filter(r => {
+        const vals = Object.entries(r).filter(([k]) => k !== 'date').map(([, v]) => v as number)
+        return vals.some(v => v > 0)
+      })
+
+      if (validRows.length === 0) throw new Error('Geen geldige data gevonden in het bestand')
+
+      setUploadMessage('Opslaan in database...')
+
+      const res = await fetch('/api/linkedin-import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rows: validRows, fileType }),
+      })
       const json = await res.json()
 
       if (json.success) {
@@ -64,9 +151,9 @@ export default function LinkedInPage() {
         setUploadMessage(json.error || 'Upload mislukt')
         setUploadDetail('')
       }
-    } catch {
+    } catch (err) {
       setUploadStatus('error')
-      setUploadMessage('Verbinding mislukt — probeer opnieuw')
+      setUploadMessage(err instanceof Error ? err.message : 'Upload mislukt — probeer opnieuw')
       setUploadDetail('')
     }
   }
