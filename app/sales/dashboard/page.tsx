@@ -46,8 +46,8 @@ export default function SalesDashboard() {
 
   // Stage helpers
   const stageMap = new Map(stages.map(s => [s.id, s]))
-  const wonStage = stages.find(s => s.name === 'Gewonnen')
-  const lostStage = stages.find(s => s.name === 'Verloren')
+  const wonStage = stages.find(s => s.name === 'Won')
+  const lostStage = stages.find(s => s.name === 'Lost/Not Interested')
 
   // Filter leads
   const activeLeads = leads.filter(l => l.stage_id !== lostStage?.id)
@@ -60,7 +60,7 @@ export default function SalesDashboard() {
 
   // Pipeline funnel data
   const funnelData = stages
-    .filter(s => s.name !== 'Verloren')
+    .filter(s => s.name !== 'Lost/Not Interested')
     .map(s => ({
       name: s.name,
       leads: leads.filter(l => l.stage_id === s.id).length,

@@ -39,7 +39,7 @@ export const mockLinkedInAnalytics: LinkedInAnalytics[] = Array.from({ length: 5
   }
 })
 
-const leadDefaults = { stage_id: null, contact_person: null, email: null, phone: null, priority: 'medium' as const, next_action: null, next_action_date: null, referred_by: null, closed_at: null }
+const leadDefaults = { stage_id: null, contact_person: null, email: null, phone: null, priority: 'medium' as const, next_action: null, next_action_date: null, referred_by: null, cover_image_url: null, closed_at: null }
 
 export const mockLeads: Lead[] = [
   { id: '1', name: 'Emma de Vries', company: 'TechScale BV', source: 'linkedin', status: 'qualified', estimated_value: 24000, notes: 'Interested in full marketing package. Demo scheduled.', created_at: '2024-03-01T10:00:00Z', ...leadDefaults },

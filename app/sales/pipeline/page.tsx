@@ -304,11 +304,11 @@ export default function PipelinePage() {
   const kpis = useMemo(() => {
     const active = leads.filter(l => {
       const stage = stages.find(s => s.id === l.stage_id)
-      return stage && stage.name !== 'Gewonnen' && stage.name !== 'Verloren'
+      return stage && stage.name !== 'Won' && stage.name !== 'Lost/Not Interested'
     })
     const won = leads.filter(l => {
       const stage = stages.find(s => s.id === l.stage_id)
-      return stage?.name === 'Gewonnen'
+      return stage?.name === 'Won'
     })
     return {
       total: leads.length,
@@ -360,9 +360,9 @@ export default function PipelinePage() {
     // Determine new status based on stage name
     const newStage = stages.find(s => s.id === newStageId)
     let newStatus = lead.status
-    if (newStage?.name === 'Gewonnen') newStatus = 'won'
-    else if (newStage?.name === 'Verloren') newStatus = 'lost'
-    else if (newStage?.name === 'Nieuw Lead') newStatus = 'new'
+    if (newStage?.name === 'Won') newStatus = 'won'
+    else if (newStage?.name === 'Lost/Not Interested') newStatus = 'lost'
+    else if (newStage?.name === 'Potentials') newStatus = 'new'
     else newStatus = 'qualified'
 
     await supabase

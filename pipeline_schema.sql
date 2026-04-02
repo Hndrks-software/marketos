@@ -14,12 +14,14 @@ CREATE TABLE pipeline_stages (
 
 -- Default stages
 INSERT INTO pipeline_stages (name, position, color) VALUES
-  ('Nieuw Lead', 0, '#3b82f6'),
-  ('Contact gelegd', 1, '#8b5cf6'),
-  ('Offerte verstuurd', 2, '#f97316'),
-  ('Onderhandeling', 3, '#eab308'),
-  ('Gewonnen', 4, '#10b981'),
-  ('Verloren', 5, '#ef4444');
+  ('Potentials', 0, '#3b82f6'),
+  ('Contacted Us', 1, '#8b5cf6'),
+  ('Leads', 2, '#f97316'),
+  ('Meeting', 3, '#eab308'),
+  ('Prospect', 4, '#10b981'),
+  ('Won', 5, '#22c55e'),
+  ('Contact Again', 6, '#6366f1'),
+  ('Lost/Not Interested', 7, '#ef4444');
 
 -- RLS voor pipeline_stages
 ALTER TABLE pipeline_stages ENABLE ROW LEVEL SECURITY;
@@ -37,10 +39,10 @@ ALTER TABLE leads
   ADD COLUMN IF NOT EXISTS closed_at timestamptz;
 
 -- Bestaande leads koppelen aan stages
-UPDATE leads SET stage_id = (SELECT id FROM pipeline_stages WHERE name = 'Nieuw Lead') WHERE status = 'new' AND stage_id IS NULL;
-UPDATE leads SET stage_id = (SELECT id FROM pipeline_stages WHERE name = 'Contact gelegd') WHERE status = 'qualified' AND stage_id IS NULL;
-UPDATE leads SET stage_id = (SELECT id FROM pipeline_stages WHERE name = 'Gewonnen') WHERE status = 'won' AND stage_id IS NULL;
-UPDATE leads SET stage_id = (SELECT id FROM pipeline_stages WHERE name = 'Verloren') WHERE status = 'lost' AND stage_id IS NULL;
+UPDATE leads SET stage_id = (SELECT id FROM pipeline_stages WHERE name = 'Potentials') WHERE status = 'new' AND stage_id IS NULL;
+UPDATE leads SET stage_id = (SELECT id FROM pipeline_stages WHERE name = 'Leads') WHERE status = 'qualified' AND stage_id IS NULL;
+UPDATE leads SET stage_id = (SELECT id FROM pipeline_stages WHERE name = 'Won') WHERE status = 'won' AND stage_id IS NULL;
+UPDATE leads SET stage_id = (SELECT id FROM pipeline_stages WHERE name = 'Lost/Not Interested') WHERE status = 'lost' AND stage_id IS NULL;
 
 -- 3. Lead Activities tabel (activiteiten log)
 CREATE TABLE lead_activities (
@@ -54,3 +56,24 @@ CREATE TABLE lead_activities (
 -- RLS voor lead_activities
 ALTER TABLE lead_activities ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow all on lead_activities" ON lead_activities FOR ALL USING (true);
+
+-- 4. Cover image op leads
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS cover_image_url text;
+
+-- 5. Lead Attachments tabel (bestanden & foto's)
+CREATE TABLE lead_attachments (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  lead_id uuid REFERENCES leads(id) ON DELETE CASCADE,
+  file_name text NOT NULL,
+  file_url text NOT NULL,
+  file_type text NOT NULL,
+  is_cover boolean DEFAULT false,
+  created_at timestamptz DEFAULT now()
+);
+
+ALTER TABLE lead_attachments ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow all on lead_attachments" ON lead_attachments FOR ALL USING (true);
+
+-- 6. Supabase Storage bucket voor lead bestanden
+-- Run dit apart of maak de bucket aan via de Supabase dashboard:
+-- INSERT INTO storage.buckets (id, name, public) VALUES ('lead-attachments', 'lead-attachments', true);

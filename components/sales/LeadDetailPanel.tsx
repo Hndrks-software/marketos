@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { X, Phone, Mail, Building2, User, Calendar, MessageSquare, PhoneCall, Mail as MailIcon, Users, ArrowRightLeft, Plus, Trash2, Save } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { X, Phone, Mail, Building2, User, Calendar, MessageSquare, PhoneCall, Mail as MailIcon, Users, ArrowRightLeft, Plus, Trash2, Save, Paperclip, Image, FileText, Download, Star } from 'lucide-react'
 import CurrencyInput from '@/components/ui/CurrencyInput'
 import { supabase } from '@/lib/supabase'
-import type { Lead, LeadActivity, PipelineStage } from '@/lib/supabase'
+import type { Lead, LeadActivity, PipelineStage, LeadAttachment } from '@/lib/supabase'
 
 const activityTypes = [
   { value: 'note', label: 'Notitie', icon: MessageSquare, color: '#64748b' },
@@ -31,12 +31,16 @@ type Props = {
 export default function LeadDetailPanel({ lead, stages, onClose, onUpdate, onDelete }: Props) {
   const [form, setForm] = useState<Lead>(lead)
   const [activities, setActivities] = useState<LeadActivity[]>([])
+  const [attachments, setAttachments] = useState<LeadAttachment[]>([])
   const [newActivity, setNewActivity] = useState({ type: 'note', description: '' })
   const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     setForm(lead)
     loadActivities()
+    loadAttachments()
   }, [lead.id])
 
   const loadActivities = async () => {
@@ -46,6 +50,15 @@ export default function LeadDetailPanel({ lead, stages, onClose, onUpdate, onDel
       .eq('lead_id', lead.id)
       .order('created_at', { ascending: false })
     if (data) setActivities(data)
+  }
+
+  const loadAttachments = async () => {
+    const { data } = await supabase
+      .from('lead_attachments')
+      .select('*')
+      .eq('lead_id', lead.id)
+      .order('created_at', { ascending: false })
+    if (data) setAttachments(data)
   }
 
   const handleSave = async () => {
@@ -66,6 +79,7 @@ export default function LeadDetailPanel({ lead, stages, onClose, onUpdate, onDel
         next_action: form.next_action,
         next_action_date: form.next_action_date,
         notes: form.notes,
+        cover_image_url: form.cover_image_url,
       })
       .eq('id', lead.id)
       .select()
@@ -75,6 +89,47 @@ export default function LeadDetailPanel({ lead, stages, onClose, onUpdate, onDel
       onUpdate(data as Lead)
       onClose()
     }
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+
+    setUploading(true)
+    for (const file of Array.from(files)) {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('lead_id', lead.id)
+
+      const res = await fetch('/api/lead-attachments', { method: 'POST', body: formData })
+      if (res.ok) {
+        const attachment = await res.json()
+        setAttachments(prev => [attachment, ...prev])
+      }
+    }
+    setUploading(false)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  const handleDeleteAttachment = async (att: LeadAttachment) => {
+    await fetch('/api/lead-attachments', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: att.id, file_url: att.file_url }),
+    })
+    setAttachments(prev => prev.filter(a => a.id !== att.id))
+    if (form.cover_image_url === att.file_url) {
+      setForm(p => ({ ...p, cover_image_url: null }))
+      await supabase.from('leads').update({ cover_image_url: null }).eq('id', lead.id)
+      onUpdate({ ...lead, cover_image_url: null })
+    }
+  }
+
+  const handleSetCover = async (att: LeadAttachment) => {
+    const newUrl = form.cover_image_url === att.file_url ? null : att.file_url
+    setForm(p => ({ ...p, cover_image_url: newUrl }))
+    await supabase.from('leads').update({ cover_image_url: newUrl }).eq('id', lead.id)
+    onUpdate({ ...lead, cover_image_url: newUrl })
   }
 
   const handleAddActivity = async () => {
@@ -100,6 +155,8 @@ export default function LeadDetailPanel({ lead, stages, onClose, onUpdate, onDel
     onDelete(lead.id)
   }
 
+  const isImage = (type: string) => type.startsWith('image/')
+
   const inputClass = 'w-full px-3 py-2 text-sm rounded-lg border border-slate-200 focus:ring-2 focus:ring-brand/30 focus:border-brand outline-none transition-all'
   const labelClass = 'text-xs font-medium text-slate-500 uppercase tracking-wide mb-1 block'
 
@@ -110,6 +167,13 @@ export default function LeadDetailPanel({ lead, stages, onClose, onUpdate, onDel
 
       {/* Panel */}
       <div className="relative w-full max-w-lg bg-white shadow-2xl overflow-y-auto animate-slide-in-right">
+        {/* Cover Image Preview */}
+        {form.cover_image_url && (
+          <div className="w-full h-48 overflow-hidden">
+            <img src={form.cover_image_url} alt="Cover" className="w-full h-full object-cover" />
+          </div>
+        )}
+
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between z-10">
           <div>
@@ -218,6 +282,82 @@ export default function LeadDetailPanel({ lead, stages, onClose, onUpdate, onDel
           <section>
             <label className={labelClass}>Notities</label>
             <textarea className={`${inputClass} h-20 resize-none`} value={form.notes || ''} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} placeholder="Vrije notities over deze lead..." />
+          </section>
+
+          {/* Attachments / Files */}
+          <section>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-slate-900">Bestanden & Foto&apos;s</h3>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg gradient-brand text-white hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                <Paperclip size={12} />
+                {uploading ? 'Uploaden...' : 'Bestand toevoegen'}
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.pptx,.txt"
+                className="hidden"
+                onChange={handleFileUpload}
+              />
+            </div>
+
+            {attachments.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-6 rounded-lg border-2 border-dashed border-slate-200 text-slate-400">
+                <Paperclip size={20} className="mb-1" />
+                <p className="text-xs">Nog geen bestanden</p>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-2">
+              {attachments.map(att => (
+                <div key={att.id} className="relative group rounded-lg border border-slate-200 overflow-hidden">
+                  {isImage(att.file_type) ? (
+                    <div className="h-28 overflow-hidden">
+                      <img src={att.file_url} alt={att.file_name} className="w-full h-full object-cover" />
+                    </div>
+                  ) : (
+                    <div className="h-28 flex items-center justify-center bg-slate-50">
+                      <FileText size={28} className="text-slate-300" />
+                    </div>
+                  )}
+                  <div className="p-2">
+                    <p className="text-[10px] text-slate-600 truncate">{att.file_name}</p>
+                  </div>
+                  {/* Hover actions */}
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                    {isImage(att.file_type) && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleSetCover(att) }}
+                        title={form.cover_image_url === att.file_url ? 'Cover verwijderen' : 'Als cover instellen'}
+                        className={`p-2 rounded-lg transition-colors ${form.cover_image_url === att.file_url ? 'bg-amber-500 text-white' : 'bg-white/90 text-slate-700 hover:bg-white'}`}
+                      >
+                        <Star size={14} fill={form.cover_image_url === att.file_url ? 'currentColor' : 'none'} />
+                      </button>
+                    )}
+                    <a
+                      href={att.file_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={e => e.stopPropagation()}
+                      className="p-2 rounded-lg bg-white/90 text-slate-700 hover:bg-white transition-colors"
+                    >
+                      <Download size={14} />
+                    </a>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDeleteAttachment(att) }}
+                      className="p-2 rounded-lg bg-white/90 text-red-500 hover:bg-white transition-colors"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </section>
 
           {/* Save Button */}

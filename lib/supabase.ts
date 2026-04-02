@@ -70,7 +70,18 @@ export type Lead = {
   next_action: string | null
   next_action_date: string | null
   referred_by: string | null
+  cover_image_url: string | null
   closed_at: string | null
+  created_at: string
+}
+
+export type LeadAttachment = {
+  id: string
+  lead_id: string
+  file_name: string
+  file_url: string
+  file_type: string
+  is_cover: boolean
   created_at: string
 }
 
