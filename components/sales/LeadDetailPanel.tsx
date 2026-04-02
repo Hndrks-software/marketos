@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { X, Phone, Mail, Building2, User, Calendar, MessageSquare, PhoneCall, Mail as MailIcon, Users, ArrowRightLeft, Plus, Trash2, Save, Paperclip, Image, FileText, Download, Star } from 'lucide-react'
+import { X, Phone, Mail, Building2, User, Calendar, MessageSquare, PhoneCall, Mail as MailIcon, Users, ArrowRightLeft, Plus, Trash2, Save, Paperclip, Image, FileText, Download, Star, ChevronDown, ChevronRight, CheckCircle2, Circle, Filter } from 'lucide-react'
 import CurrencyInput from '@/components/ui/CurrencyInput'
 import { supabase } from '@/lib/supabase'
 import type { Lead, LeadActivity, PipelineStage, LeadAttachment } from '@/lib/supabase'
@@ -35,7 +35,11 @@ export default function LeadDetailPanel({ lead, stages, onClose, onUpdate, onDel
   const [newActivity, setNewActivity] = useState({ type: 'note', description: '' })
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({ notes: true })
+  const [activityFilter, setActivityFilter] = useState<string>('all')
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const toggleSection = (key: string) => setOpenSections(p => ({ ...p, [key]: !p[key] }))
 
   useEffect(() => {
     setForm(lead)
@@ -132,6 +136,28 @@ export default function LeadDetailPanel({ lead, stages, onClose, onUpdate, onDel
     onUpdate({ ...lead, cover_image_url: newUrl })
   }
 
+  const handleCompleteAction = async () => {
+    if (!form.next_action) return
+    const description = `Actie afgerond: ${form.next_action}${form.next_action_date ? ` (deadline: ${form.next_action_date})` : ''}`
+
+    // Log as activity
+    const { data } = await supabase
+      .from('lead_activities')
+      .insert({
+        lead_id: lead.id,
+        type: 'note',
+        description,
+      })
+      .select()
+      .single()
+    if (data) setActivities(prev => [data as LeadActivity, ...prev])
+
+    // Clear the action
+    setForm(p => ({ ...p, next_action: '', next_action_date: '' }))
+    await supabase.from('leads').update({ next_action: null, next_action_date: null }).eq('id', lead.id)
+    onUpdate({ ...lead, next_action: null, next_action_date: null })
+  }
+
   const handleAddActivity = async () => {
     if (!newActivity.description.trim()) return
     const { data } = await supabase
@@ -191,173 +217,209 @@ export default function LeadDetailPanel({ lead, stages, onClose, onUpdate, onDel
         </div>
 
         <div className="px-6 py-5 space-y-6">
-          {/* Contact Info */}
+          {/* Project Notities - altijd zichtbaar bovenaan */}
           <section>
-            <h3 className="text-sm font-semibold text-slate-900 mb-3">Contactgegevens</h3>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className={labelClass}>Bedrijf</label>
-                <div className="relative">
-                  <Building2 size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input className={`${inputClass} pl-9`} value={form.company || ''} onChange={e => setForm(p => ({ ...p, company: e.target.value }))} />
-                </div>
-              </div>
-              <div>
-                <label className={labelClass}>Contactpersoon</label>
-                <div className="relative">
-                  <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input className={`${inputClass} pl-9`} value={form.contact_person || ''} onChange={e => setForm(p => ({ ...p, contact_person: e.target.value }))} />
-                </div>
-              </div>
-              <div>
-                <label className={labelClass}>Email</label>
-                <div className="relative">
-                  <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input className={`${inputClass} pl-9`} type="email" value={form.email || ''} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} />
-                </div>
-              </div>
-              <div>
-                <label className={labelClass}>Telefoon</label>
-                <div className="relative">
-                  <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input className={`${inputClass} pl-9`} value={form.phone || ''} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} />
-                </div>
-              </div>
-            </div>
-            <div className="mt-3">
-              <label className={labelClass}>Via (verwijzer / vertegenwoordiger)</label>
-              <div className="relative">
-                <Users size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input className={`${inputClass} pl-9`} value={form.referred_by || ''} onChange={e => setForm(p => ({ ...p, referred_by: e.target.value }))} placeholder="Bijv. Claude Mis, Ruurd Jellema..." />
-              </div>
-            </div>
+            <h3 className="text-sm font-semibold text-slate-900 mb-2">Projectinformatie</h3>
+            <textarea className={`${inputClass} h-32 resize-y`} value={form.notes || ''} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} placeholder="Projectomschrijving, notities, belangrijke info..." />
           </section>
 
-          {/* Deal Info */}
+          {/* Volgende actie - ook altijd zichtbaar */}
           <section>
-            <h3 className="text-sm font-semibold text-slate-900 mb-3">Deal informatie</h3>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className={labelClass}>Geschatte waarde (€)</label>
-                <CurrencyInput className={inputClass} value={form.estimated_value || 0} onChange={v => setForm(p => ({ ...p, estimated_value: v }))} />
-              </div>
-              <div>
-                <label className={labelClass}>Prioriteit</label>
-                <select className={inputClass} value={form.priority || 'medium'} onChange={e => setForm(p => ({ ...p, priority: e.target.value as Lead['priority'] }))}>
-                  {priorityOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className={labelClass}>Bron</label>
-                <select className={inputClass} value={form.source || ''} onChange={e => setForm(p => ({ ...p, source: e.target.value }))}>
-                  <option value="linkedin">LinkedIn</option>
-                  <option value="website">Website</option>
-                  <option value="direct">Direct</option>
-                  <option value="other">Anders</option>
-                </select>
-              </div>
-              <div>
-                <label className={labelClass}>Stage</label>
-                <select className={inputClass} value={form.stage_id || ''} onChange={e => setForm(p => ({ ...p, stage_id: e.target.value }))}>
-                  {stages.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                </select>
-              </div>
-            </div>
-          </section>
-
-          {/* Next Action */}
-          <section>
-            <h3 className="text-sm font-semibold text-slate-900 mb-3">Volgende actie</h3>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="col-span-2">
-                <input className={inputClass} placeholder="Bijv. Follow-up bellen" value={form.next_action || ''} onChange={e => setForm(p => ({ ...p, next_action: e.target.value }))} />
-              </div>
-              <div>
-                <input className={inputClass} type="date" value={form.next_action_date || ''} onChange={e => setForm(p => ({ ...p, next_action_date: e.target.value }))} />
-              </div>
-            </div>
-          </section>
-
-          {/* Notes */}
-          <section>
-            <label className={labelClass}>Notities</label>
-            <textarea className={`${inputClass} h-20 resize-none`} value={form.notes || ''} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} placeholder="Vrije notities over deze lead..." />
-          </section>
-
-          {/* Attachments / Files */}
-          <section>
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-slate-900">Bestanden & Foto&apos;s</h3>
+            <h3 className="text-sm font-semibold text-slate-900 mb-2">Volgende actie</h3>
+            <div className="flex gap-2 items-start">
               <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg gradient-brand text-white hover:opacity-90 transition-opacity disabled:opacity-50"
+                onClick={handleCompleteAction}
+                disabled={!form.next_action}
+                title={form.next_action ? 'Markeer als afgerond' : 'Vul eerst een actie in'}
+                className={`mt-2 flex-shrink-0 transition-colors ${form.next_action ? 'text-slate-300 hover:text-green-500' : 'text-slate-200 cursor-not-allowed'}`}
               >
-                <Paperclip size={12} />
-                {uploading ? 'Uploaden...' : 'Bestand toevoegen'}
+                <Circle size={20} />
               </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.pptx,.txt"
-                className="hidden"
-                onChange={handleFileUpload}
-              />
+              <div className="flex-1 grid grid-cols-3 gap-3">
+                <div className="col-span-2">
+                  <input className={inputClass} placeholder="Bijv. Follow-up bellen" value={form.next_action || ''} onChange={e => setForm(p => ({ ...p, next_action: e.target.value }))} />
+                </div>
+                <div>
+                  <input className={inputClass} type="date" value={form.next_action_date || ''} onChange={e => setForm(p => ({ ...p, next_action_date: e.target.value }))} />
+                </div>
+              </div>
             </div>
+          </section>
 
-            {attachments.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-6 rounded-lg border-2 border-dashed border-slate-200 text-slate-400">
-                <Paperclip size={20} className="mb-1" />
-                <p className="text-xs">Nog geen bestanden</p>
+          {/* Bedrijfsgegevens - inklapbaar */}
+          <section className="border border-slate-200 rounded-lg overflow-hidden">
+            <button onClick={() => toggleSection('contact')} className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors">
+              <h3 className="text-sm font-semibold text-slate-900">Bedrijfsgegevens</h3>
+              {openSections.contact ? <ChevronDown size={16} className="text-slate-400" /> : <ChevronRight size={16} className="text-slate-400" />}
+            </button>
+            {openSections.contact && (
+              <div className="px-4 py-3 space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={labelClass}>Bedrijf</label>
+                    <div className="relative">
+                      <Building2 size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <input className={`${inputClass} pl-9`} value={form.company || ''} onChange={e => setForm(p => ({ ...p, company: e.target.value }))} />
+                    </div>
+                  </div>
+                  <div>
+                    <label className={labelClass}>Contactpersoon</label>
+                    <div className="relative">
+                      <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <input className={`${inputClass} pl-9`} value={form.contact_person || ''} onChange={e => setForm(p => ({ ...p, contact_person: e.target.value }))} />
+                    </div>
+                  </div>
+                  <div>
+                    <label className={labelClass}>Email</label>
+                    <div className="relative">
+                      <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <input className={`${inputClass} pl-9`} type="email" value={form.email || ''} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} />
+                    </div>
+                  </div>
+                  <div>
+                    <label className={labelClass}>Telefoon</label>
+                    <div className="relative">
+                      <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <input className={`${inputClass} pl-9`} value={form.phone || ''} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} />
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <label className={labelClass}>Via (verwijzer / vertegenwoordiger)</label>
+                  <div className="relative">
+                    <Users size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input className={`${inputClass} pl-9`} value={form.referred_by || ''} onChange={e => setForm(p => ({ ...p, referred_by: e.target.value }))} placeholder="Bijv. Claude Mis, Ruurd Jellema..." />
+                  </div>
+                </div>
               </div>
             )}
+          </section>
 
-            <div className="grid grid-cols-2 gap-2">
-              {attachments.map(att => (
-                <div key={att.id} className="relative group rounded-lg border border-slate-200 overflow-hidden">
-                  {isImage(att.file_type) ? (
-                    <div className="h-28 overflow-hidden">
-                      <img src={att.file_url} alt={att.file_name} className="w-full h-full object-cover" />
-                    </div>
-                  ) : (
-                    <div className="h-28 flex items-center justify-center bg-slate-50">
-                      <FileText size={28} className="text-slate-300" />
-                    </div>
-                  )}
-                  <div className="p-2">
-                    <p className="text-[10px] text-slate-600 truncate">{att.file_name}</p>
+          {/* Deal informatie - inklapbaar */}
+          <section className="border border-slate-200 rounded-lg overflow-hidden">
+            <button onClick={() => toggleSection('deal')} className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors">
+              <h3 className="text-sm font-semibold text-slate-900">Deal informatie</h3>
+              {openSections.deal ? <ChevronDown size={16} className="text-slate-400" /> : <ChevronRight size={16} className="text-slate-400" />}
+            </button>
+            {openSections.deal && (
+              <div className="px-4 py-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={labelClass}>Geschatte waarde (&euro;)</label>
+                    <CurrencyInput className={inputClass} value={form.estimated_value || 0} onChange={v => setForm(p => ({ ...p, estimated_value: v }))} />
                   </div>
-                  {/* Hover actions */}
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                    {isImage(att.file_type) && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleSetCover(att) }}
-                        title={form.cover_image_url === att.file_url ? 'Cover verwijderen' : 'Als cover instellen'}
-                        className={`p-2 rounded-lg transition-colors ${form.cover_image_url === att.file_url ? 'bg-amber-500 text-white' : 'bg-white/90 text-slate-700 hover:bg-white'}`}
-                      >
-                        <Star size={14} fill={form.cover_image_url === att.file_url ? 'currentColor' : 'none'} />
-                      </button>
-                    )}
-                    <a
-                      href={att.file_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={e => e.stopPropagation()}
-                      className="p-2 rounded-lg bg-white/90 text-slate-700 hover:bg-white transition-colors"
-                    >
-                      <Download size={14} />
-                    </a>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleDeleteAttachment(att) }}
-                      className="p-2 rounded-lg bg-white/90 text-red-500 hover:bg-white transition-colors"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                  <div>
+                    <label className={labelClass}>Prioriteit</label>
+                    <select className={inputClass} value={form.priority || 'medium'} onChange={e => setForm(p => ({ ...p, priority: e.target.value as Lead['priority'] }))}>
+                      {priorityOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className={labelClass}>Bron</label>
+                    <select className={inputClass} value={form.source || ''} onChange={e => setForm(p => ({ ...p, source: e.target.value }))}>
+                      <option value="linkedin">LinkedIn</option>
+                      <option value="website">Website</option>
+                      <option value="direct">Direct</option>
+                      <option value="other">Anders</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className={labelClass}>Stage</label>
+                    <select className={inputClass} value={form.stage_id || ''} onChange={e => setForm(p => ({ ...p, stage_id: e.target.value }))}>
+                      {stages.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    </select>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
+          </section>
+
+          {/* Bestanden & Foto's - inklapbaar */}
+          <section className="border border-slate-200 rounded-lg overflow-hidden">
+            <button onClick={() => toggleSection('files')} className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors">
+              <h3 className="text-sm font-semibold text-slate-900">Bestanden & Foto&apos;s</h3>
+              <div className="flex items-center gap-2">
+                {attachments.length > 0 && (
+                  <span className="text-xs text-slate-400">{attachments.length}</span>
+                )}
+                {openSections.files ? <ChevronDown size={16} className="text-slate-400" /> : <ChevronRight size={16} className="text-slate-400" />}
+              </div>
+            </button>
+            {openSections.files && (
+              <div className="px-4 py-3">
+                <div className="flex justify-end mb-3">
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg gradient-brand text-white hover:opacity-90 transition-opacity disabled:opacity-50"
+                  >
+                    <Paperclip size={12} />
+                    {uploading ? 'Uploaden...' : 'Bestand toevoegen'}
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.pptx,.txt"
+                    className="hidden"
+                    onChange={handleFileUpload}
+                  />
+                </div>
+
+                {attachments.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-6 rounded-lg border-2 border-dashed border-slate-200 text-slate-400">
+                    <Paperclip size={20} className="mb-1" />
+                    <p className="text-xs">Nog geen bestanden</p>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-2">
+                  {attachments.map(att => (
+                    <div key={att.id} className="relative group rounded-lg border border-slate-200 overflow-hidden">
+                      {isImage(att.file_type) ? (
+                        <div className="h-28 overflow-hidden">
+                          <img src={att.file_url} alt={att.file_name} className="w-full h-full object-cover" />
+                        </div>
+                      ) : (
+                        <div className="h-28 flex items-center justify-center bg-slate-50">
+                          <FileText size={28} className="text-slate-300" />
+                        </div>
+                      )}
+                      <div className="p-2">
+                        <p className="text-[10px] text-slate-600 truncate">{att.file_name}</p>
+                      </div>
+                      {/* Hover actions */}
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                        {isImage(att.file_type) && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleSetCover(att) }}
+                            title={form.cover_image_url === att.file_url ? 'Cover verwijderen' : 'Als cover instellen'}
+                            className={`p-2 rounded-lg transition-colors ${form.cover_image_url === att.file_url ? 'bg-amber-500 text-white' : 'bg-white/90 text-slate-700 hover:bg-white'}`}
+                          >
+                            <Star size={14} fill={form.cover_image_url === att.file_url ? 'currentColor' : 'none'} />
+                          </button>
+                        )}
+                        <a
+                          href={att.file_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={e => e.stopPropagation()}
+                          className="p-2 rounded-lg bg-white/90 text-slate-700 hover:bg-white transition-colors"
+                        >
+                          <Download size={14} />
+                        </a>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDeleteAttachment(att) }}
+                          className="p-2 rounded-lg bg-white/90 text-red-500 hover:bg-white transition-colors"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </section>
 
           {/* Save Button */}
@@ -399,12 +461,29 @@ export default function LeadDetailPanel({ lead, stages, onClose, onUpdate, onDel
               </div>
             </div>
 
+            {/* Activity filter */}
+            <div className="flex items-center gap-1 mb-3 flex-wrap">
+              {[{ value: 'all', label: 'Alles' }, ...activityTypes].map(t => (
+                <button
+                  key={t.value}
+                  onClick={() => setActivityFilter(t.value)}
+                  className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
+                    activityFilter === t.value
+                      ? 'bg-slate-900 text-white'
+                      : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
             {/* Timeline */}
             <div className="space-y-3">
-              {activities.length === 0 && (
+              {activities.filter(a => activityFilter === 'all' || a.type === activityFilter).length === 0 && (
                 <p className="text-xs text-slate-400 text-center py-4">Nog geen activiteiten</p>
               )}
-              {activities.map(act => {
+              {activities.filter(a => activityFilter === 'all' || a.type === activityFilter).map(act => {
                 const typeConfig = activityTypes.find(t => t.value === act.type) || activityTypes[0]
                 const Icon = typeConfig.icon
                 return (

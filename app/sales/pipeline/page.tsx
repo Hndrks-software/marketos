@@ -40,7 +40,7 @@ function DroppableColumn({ id, children }: { id: string; children: React.ReactNo
   return (
     <div
       ref={setNodeRef}
-      className={`flex-1 min-h-[200px] transition-colors rounded-lg ${isOver ? 'bg-brand/5' : ''}`}
+      className={`flex-1 min-h-0 flex flex-col transition-colors rounded-lg ${isOver ? 'bg-brand/5' : ''}`}
     >
       {children}
     </div>
@@ -479,15 +479,15 @@ export default function PipelinePage() {
         onDragEnd={handleDragEnd}
         onDragOver={handleDragOver}
       >
-        <div className="flex gap-4 overflow-x-auto pb-4" style={{ minHeight: 'calc(100vh - 340px)' }}>
+        <div className="flex gap-4 overflow-x-auto pb-4" style={{ height: 'calc(100vh - 340px)' }}>
           {stages.map(stage => {
             const stageLeads = leadsByStage[stage.id] || []
             const stageValue = stageLeads.reduce((sum, l) => sum + (l.estimated_value || 0), 0)
 
             return (
-              <div key={stage.id} className="flex-shrink-0 w-72 flex flex-col">
+              <div key={stage.id} className="flex-shrink-0 w-72 flex flex-col h-full">
                 {/* Column Header */}
-                <div className="flex items-center justify-between mb-3 px-1">
+                <div className="flex items-center justify-between mb-3 px-1 flex-shrink-0">
                   <div className="flex items-center gap-2">
                     <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: stage.color }} />
                     <h3 className="text-sm font-semibold text-slate-900">{stage.name}</h3>
@@ -502,10 +502,10 @@ export default function PipelinePage() {
                   )}
                 </div>
 
-                {/* Column Body */}
+                {/* Column Body - scrollable per column */}
                 <DroppableColumn id={stage.id}>
                   <SortableContext items={stageLeads.map(l => l.id)} strategy={verticalListSortingStrategy}>
-                    <div className="space-y-2.5 min-h-[100px] rounded-xl bg-slate-50/80 border border-slate-100 p-2.5">
+                    <div className="space-y-2.5 min-h-[100px] rounded-xl bg-slate-50/80 border border-slate-100 p-2.5 overflow-y-auto flex-1">
                       {stageLeads.map(lead => (
                         <LeadCard
                           key={lead.id}
