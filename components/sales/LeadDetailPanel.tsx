@@ -71,7 +71,10 @@ export default function LeadDetailPanel({ lead, stages, onClose, onUpdate, onDel
       .select()
       .single()
     setSaving(false)
-    if (data) onUpdate(data as Lead)
+    if (data) {
+      onUpdate(data as Lead)
+      onClose()
+    }
   }
 
   const handleAddActivity = async () => {
