@@ -38,9 +38,14 @@ const EXT_TO_MIME: Record<string, string> = {
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 function sanitizeFileName(name: string): string {
-  // Strip path separators and control chars; keep a single extension
-  const base = name.replace(/[\x00-\x1f/\\]/g, '').slice(0, 120)
-  return base || 'file'
+  // Supabase Storage keys accepteren alleen ASCII-letters, cijfers en een kleine
+  // set leestekens. Strip diakrieten (ö→o) en vervang overige niet-toegestane
+  // tekens door een underscore, zodat uploads met umlauts/emoji's niet falen.
+  const stripped = name
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // combining diacritics
+  const safe = stripped.replace(/[^A-Za-z0-9._\-()]/g, '_').slice(0, 120)
+  return safe.replace(/^_+|_+$/g, '') || 'file'
 }
 
 export async function POST(req: NextRequest) {
