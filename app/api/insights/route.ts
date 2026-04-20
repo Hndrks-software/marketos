@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
-import { createClient } from '@supabase/supabase-js'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { JWT } from 'google-auth-library'
 import { requireAuth } from '@/lib/auth'
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rateLimit'
@@ -97,13 +97,8 @@ async function getGA4Data(): Promise<string> {
   }
 }
 
-async function getLinkedInData(): Promise<string> {
+async function getLinkedInData(supabase: SupabaseClient): Promise<string> {
   try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-    )
-
     const now = new Date()
     const fourWeeksAgo = new Date(now.getTime() - 28 * 86400000).toISOString().split('T')[0]
     const eightWeeksAgo = new Date(now.getTime() - 56 * 86400000).toISOString().split('T')[0]
@@ -196,8 +191,8 @@ async function getLinkedInData(): Promise<string> {
 }
 
 export async function POST(request: Request) {
-  const user = await requireAuth()
-  if (user instanceof Response) return user
+  const auth = await requireAuth()
+  if (auth instanceof Response) return auth
 
   const rl = checkRateLimit(`${getClientIP(request)}:/api/insights`, 20)
   if (!rl.allowed) return rateLimitResponse(rl.resetAt)
@@ -210,7 +205,7 @@ export async function POST(request: Request) {
       return Response.json({ error: 'Ongeldige pagina' }, { status: 400 })
     }
 
-    const [ga4Data, linkedInData] = await Promise.all([getGA4Data(), getLinkedInData()])
+    const [ga4Data, linkedInData] = await Promise.all([getGA4Data(), getLinkedInData(auth.supabase)])
 
     const systemPrompts: Record<string, string> = {
       dashboard: `Je bent de AI-marketingadviseur van Collo-X (B2B machinebouwer, logistiek/farmaceutisch).

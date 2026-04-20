@@ -40,8 +40,8 @@ async function runReport(token: string, body: object) {
 type Row = { dimensionValues?: { value: string }[]; metricValues?: { value: string }[] }
 
 export async function GET(request: Request) {
-  const user = await requireAuth()
-  if (user instanceof Response) return user
+  const auth = await requireAuth()
+  if (auth instanceof Response) return auth
 
   const rl = checkRateLimit(`${getClientIP(request)}:/api/ga4`, 30)
   if (!rl.allowed) return rateLimitResponse(rl.resetAt)

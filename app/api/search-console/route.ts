@@ -48,8 +48,8 @@ async function querySearchConsole(token: string, body: object) {
 }
 
 export async function GET(request: Request) {
-  const user = await requireAuth()
-  if (user instanceof Response) return user
+  const auth = await requireAuth()
+  if (auth instanceof Response) return auth
 
   const rl = checkRateLimit(`${getClientIP(request)}:/api/search-console`, 30)
   if (!rl.allowed) return rateLimitResponse(rl.resetAt)

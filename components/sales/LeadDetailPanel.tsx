@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { X, Phone, Mail, Building2, User, Calendar, MessageSquare, PhoneCall, Mail as MailIcon, Users, ArrowRightLeft, Plus, Trash2, Save, Paperclip, Image, FileText, Download, Star, ChevronDown, ChevronRight, CheckCircle2, Circle, Filter } from 'lucide-react'
 import CurrencyInput from '@/components/ui/CurrencyInput'
 import { supabase } from '@/lib/supabase'
+import { getSignedUrls } from '@/lib/storage'
 import type { Lead, LeadActivity, PipelineStage, LeadAttachment } from '@/lib/supabase'
 
 const activityTypes = [
@@ -32,6 +33,8 @@ export default function LeadDetailPanel({ lead, stages, onClose, onUpdate, onDel
   const [form, setForm] = useState<Lead>(lead)
   const [activities, setActivities] = useState<LeadActivity[]>([])
   const [attachments, setAttachments] = useState<LeadAttachment[]>([])
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({})
+  const [coverSignedUrl, setCoverSignedUrl] = useState<string | null>(null)
   const [newActivity, setNewActivity] = useState({ type: 'note', description: '' })
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -46,6 +49,17 @@ export default function LeadDetailPanel({ lead, stages, onClose, onUpdate, onDel
     loadActivities()
     loadAttachments()
   }, [lead.id])
+
+  // Cover image: signed URL ophalen wanneer cover_image_path verandert.
+  useEffect(() => {
+    const path = form.cover_image_path
+    if (!path) { setCoverSignedUrl(null); return }
+    let cancelled = false
+    getSignedUrls([path]).then(map => {
+      if (!cancelled) setCoverSignedUrl(map[path] ?? null)
+    })
+    return () => { cancelled = true }
+  }, [form.cover_image_path])
 
   const loadActivities = async () => {
     const { data } = await supabase
@@ -62,7 +76,16 @@ export default function LeadDetailPanel({ lead, stages, onClose, onUpdate, onDel
       .select('*')
       .eq('lead_id', lead.id)
       .order('created_at', { ascending: false })
-    if (data) setAttachments(data)
+    if (!data) return
+    setAttachments(data)
+
+    const paths = data.map(a => a.file_path).filter((p): p is string => !!p)
+    if (paths.length > 0) {
+      const urls = await getSignedUrls(paths)
+      setSignedUrls(urls)
+    } else {
+      setSignedUrls({})
+    }
   }
 
   const handleSave = async () => {
@@ -83,7 +106,7 @@ export default function LeadDetailPanel({ lead, stages, onClose, onUpdate, onDel
         next_action: form.next_action,
         next_action_date: form.next_action_date,
         notes: form.notes,
-        cover_image_url: form.cover_image_url,
+        cover_image_path: form.cover_image_path,
       })
       .eq('id', lead.id)
       .select()
@@ -107,8 +130,11 @@ export default function LeadDetailPanel({ lead, stages, onClose, onUpdate, onDel
 
       const res = await fetch('/api/lead-attachments', { method: 'POST', body: formData })
       if (res.ok) {
-        const attachment = await res.json()
+        const attachment = await res.json() as LeadAttachment
         setAttachments(prev => [attachment, ...prev])
+        if (attachment.file_path && attachment.file_url) {
+          setSignedUrls(prev => ({ ...prev, [attachment.file_path!]: attachment.file_url }))
+        }
       }
     }
     setUploading(false)
@@ -119,21 +145,22 @@ export default function LeadDetailPanel({ lead, stages, onClose, onUpdate, onDel
     await fetch('/api/lead-attachments', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: att.id, file_url: att.file_url }),
+      body: JSON.stringify({ id: att.id }),
     })
     setAttachments(prev => prev.filter(a => a.id !== att.id))
-    if (form.cover_image_url === att.file_url) {
-      setForm(p => ({ ...p, cover_image_url: null }))
-      await supabase.from('leads').update({ cover_image_url: null }).eq('id', lead.id)
-      onUpdate({ ...lead, cover_image_url: null })
+    if (att.file_path && form.cover_image_path === att.file_path) {
+      setForm(p => ({ ...p, cover_image_path: null }))
+      await supabase.from('leads').update({ cover_image_path: null }).eq('id', lead.id)
+      onUpdate({ ...lead, cover_image_path: null })
     }
   }
 
   const handleSetCover = async (att: LeadAttachment) => {
-    const newUrl = form.cover_image_url === att.file_url ? null : att.file_url
-    setForm(p => ({ ...p, cover_image_url: newUrl }))
-    await supabase.from('leads').update({ cover_image_url: newUrl }).eq('id', lead.id)
-    onUpdate({ ...lead, cover_image_url: newUrl })
+    if (!att.file_path) return
+    const newPath = form.cover_image_path === att.file_path ? null : att.file_path
+    setForm(p => ({ ...p, cover_image_path: newPath }))
+    await supabase.from('leads').update({ cover_image_path: newPath }).eq('id', lead.id)
+    onUpdate({ ...lead, cover_image_path: newPath })
   }
 
   const handleCompleteAction = async () => {
@@ -194,9 +221,9 @@ export default function LeadDetailPanel({ lead, stages, onClose, onUpdate, onDel
       {/* Panel */}
       <div className="relative w-full max-w-lg bg-white shadow-2xl overflow-y-auto animate-slide-in-right">
         {/* Cover Image Preview */}
-        {form.cover_image_url && (
+        {coverSignedUrl && (
           <div className="w-full h-48 overflow-hidden">
-            <img src={form.cover_image_url} alt="Cover" className="w-full h-full object-cover" />
+            <img src={coverSignedUrl} alt="Cover" className="w-full h-full object-cover" />
           </div>
         )}
 
@@ -374,11 +401,14 @@ export default function LeadDetailPanel({ lead, stages, onClose, onUpdate, onDel
                 )}
 
                 <div className="grid grid-cols-2 gap-2">
-                  {attachments.map(att => (
+                  {attachments.map(att => {
+                    const displayUrl = (att.file_path && signedUrls[att.file_path]) || ''
+                    const isCover = !!att.file_path && form.cover_image_path === att.file_path
+                    return (
                     <div key={att.id} className="relative group rounded-lg border border-slate-200 overflow-hidden">
                       {isImage(att.file_type) ? (
                         <div className="h-28 overflow-hidden">
-                          <img src={att.file_url} alt={att.file_name} className="w-full h-full object-cover" />
+                          {displayUrl && <img src={displayUrl} alt={att.file_name} className="w-full h-full object-cover" />}
                         </div>
                       ) : (
                         <div className="h-28 flex items-center justify-center bg-slate-50">
@@ -393,14 +423,14 @@ export default function LeadDetailPanel({ lead, stages, onClose, onUpdate, onDel
                         {isImage(att.file_type) && (
                           <button
                             onClick={(e) => { e.stopPropagation(); handleSetCover(att) }}
-                            title={form.cover_image_url === att.file_url ? 'Cover verwijderen' : 'Als cover instellen'}
-                            className={`p-2 rounded-lg transition-colors ${form.cover_image_url === att.file_url ? 'bg-amber-500 text-white' : 'bg-white/90 text-slate-700 hover:bg-white'}`}
+                            title={isCover ? 'Cover verwijderen' : 'Als cover instellen'}
+                            className={`p-2 rounded-lg transition-colors ${isCover ? 'bg-amber-500 text-white' : 'bg-white/90 text-slate-700 hover:bg-white'}`}
                           >
-                            <Star size={14} fill={form.cover_image_url === att.file_url ? 'currentColor' : 'none'} />
+                            <Star size={14} fill={isCover ? 'currentColor' : 'none'} />
                           </button>
                         )}
                         <a
-                          href={att.file_url}
+                          href={displayUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={e => e.stopPropagation()}
@@ -416,7 +446,7 @@ export default function LeadDetailPanel({ lead, stages, onClose, onUpdate, onDel
                         </button>
                       </div>
                     </div>
-                  ))}
+                  )})}
                 </div>
               </div>
             )}

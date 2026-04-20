@@ -1,70 +1,78 @@
-import { createClient } from '@supabase/supabase-js'
+import { z } from 'zod'
 import { requireAuth } from '@/lib/auth'
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rateLimit'
 
 export const maxDuration = 30
 
-type AnalyticsRow = {
-  date: string
-  impressions?: number
-  clicks?: number
-  reactions?: number
-  comments?: number
-  shares?: number
-  engagement_rate?: number
-  new_followers?: number
-  total_followers?: number
-  page_views?: number
-  unique_visitors?: number
-}
+const MAX_ROWS = 5000
 
-type PostRow = {
-  post_url: string
-  post_title: string
-  post_type: string
-  content_type?: string
-  published_date: string
-  audience?: string
-  views: number
-  unique_views?: number
-  clicks: number
-  ctr?: number
-  reactions: number
-  comments: number
-  reposts: number
-  follows?: number
-  engagement_rate?: number
-}
+const analyticsRow = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  impressions: z.number().int().nonnegative().optional(),
+  clicks: z.number().int().nonnegative().optional(),
+  reactions: z.number().int().nonnegative().optional(),
+  comments: z.number().int().nonnegative().optional(),
+  shares: z.number().int().nonnegative().optional(),
+  engagement_rate: z.number().nonnegative().optional(),
+  new_followers: z.number().int().optional(),
+  total_followers: z.number().int().nonnegative().optional(),
+  page_views: z.number().int().nonnegative().optional(),
+  unique_visitors: z.number().int().nonnegative().optional(),
+}).passthrough()
+
+const postRow = z.object({
+  post_url: z.string().url().max(1000),
+  post_title: z.string().max(2000).optional(),
+  post_type: z.string().max(100).optional(),
+  content_type: z.string().max(100).optional(),
+  published_date: z.string().regex(/^\d{4}-\d{2}-\d{2}/).optional(),
+  audience: z.string().max(200).optional(),
+  views: z.number().int().nonnegative().optional(),
+  unique_views: z.number().int().nonnegative().optional(),
+  clicks: z.number().int().nonnegative().optional(),
+  ctr: z.number().nonnegative().optional(),
+  reactions: z.number().int().nonnegative().optional(),
+  comments: z.number().int().nonnegative().optional(),
+  reposts: z.number().int().nonnegative().optional(),
+  follows: z.number().int().nonnegative().optional(),
+  engagement_rate: z.number().nonnegative().optional(),
+}).passthrough()
+
+const bodySchema = z.object({
+  fileType: z.enum(['content-posts', 'visitor-metrics', 'follower-metrics', 'update-metrics', 'content-metrics']),
+  rows: z.array(z.record(z.string(), z.unknown())).min(1).max(MAX_ROWS),
+})
 
 export async function POST(request: Request) {
-  const user = await requireAuth()
-  if (user instanceof Response) return user
+  const auth = await requireAuth()
+  if (auth instanceof Response) return auth
 
   const rl = checkRateLimit(`${getClientIP(request)}:/api/linkedin-import`, 10)
   if (!rl.allowed) return rateLimitResponse(rl.resetAt)
 
   try {
-    const body = await request.json()
-    const rows = body?.rows
-    const fileType = body?.fileType
-
-    if (!Array.isArray(rows) || typeof fileType !== 'string') {
-      return Response.json({ error: 'Ongeldig verzoek' }, { status: 400 })
+    const body = await request.json().catch(() => null)
+    const parsed = bodySchema.safeParse(body)
+    if (!parsed.success) {
+      return Response.json({
+        error: `Ongeldig verzoek: ${parsed.error.issues[0]?.message ?? 'validatiefout'}`,
+      }, { status: 400 })
     }
 
-    if (!rows || rows.length === 0) {
-      return Response.json({ error: 'Geen data ontvangen' }, { status: 400 })
-    }
-
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-    )
+    const { rows, fileType } = parsed.data
 
     if (fileType === 'content-posts') {
-      const { error } = await supabase
+      const cleanRows: unknown[] = []
+      for (let i = 0; i < rows.length; i++) {
+        const r = postRow.safeParse(rows[i])
+        if (!r.success) {
+          return Response.json({ error: `Rij ${i + 1} ongeldig: ${r.error.issues[0]?.message}` }, { status: 400 })
+        }
+        cleanRows.push(r.data)
+      }
+      const { error } = await auth.supabase
         .from('linkedin_posts')
-        .upsert(rows as PostRow[], { onConflict: 'post_url' })
+        .upsert(cleanRows, { onConflict: 'post_url' })
       if (error) {
         console.error('Supabase posts upsert error:', error)
         return Response.json({ error: `Database fout: ${error.message}` }, { status: 500 })
@@ -72,23 +80,31 @@ export async function POST(request: Request) {
       return Response.json({ success: true, fileType, rowsImported: rows.length })
     }
 
-    const { error } = await supabase
+    const cleanRows: unknown[] = []
+    for (let i = 0; i < rows.length; i++) {
+      const r = analyticsRow.safeParse(rows[i])
+      if (!r.success) {
+        return Response.json({ error: `Rij ${i + 1} ongeldig: ${r.error.issues[0]?.message}` }, { status: 400 })
+      }
+      cleanRows.push(r.data)
+    }
+
+    const { error } = await auth.supabase
       .from('linkedin_analytics')
-      .upsert(rows as AnalyticsRow[], { onConflict: 'date' })
+      .upsert(cleanRows, { onConflict: 'date' })
 
     if (error) {
       console.error('Supabase upsert error:', error)
       return Response.json({ error: `Database fout: ${error.message}` }, { status: 500 })
     }
 
+    const first = cleanRows[0] as { date?: string }
+    const last = cleanRows[cleanRows.length - 1] as { date?: string }
     return Response.json({
       success: true,
       fileType,
       rowsImported: rows.length,
-      dateRange: {
-        from: (rows[0] as AnalyticsRow)?.date,
-        to: (rows[rows.length - 1] as AnalyticsRow)?.date,
-      },
+      dateRange: { from: first?.date, to: last?.date },
     })
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Onbekende fout'

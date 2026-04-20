@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
-import { createClient } from '@supabase/supabase-js'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { requireAuth } from '@/lib/auth'
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rateLimit'
 
@@ -7,12 +7,7 @@ const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 })
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-)
-
-async function buildSystemPrompt(): Promise<string> {
+async function buildSystemPrompt(supabase: SupabaseClient): Promise<string> {
   // Haal echte data op uit Supabase
   const now = new Date()
   const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
@@ -58,8 +53,8 @@ Geef concrete, data-gedreven adviezen. Wees direct en bondig. Gebruik bullet poi
 }
 
 export async function POST(request: Request) {
-  const user = await requireAuth()
-  if (user instanceof Response) return user
+  const auth = await requireAuth()
+  if (auth instanceof Response) return auth
 
   const rl = checkRateLimit(`${getClientIP(request)}:/api/chat`, 20)
   if (!rl.allowed) return rateLimitResponse(rl.resetAt)
@@ -71,7 +66,7 @@ export async function POST(request: Request) {
       return Response.json({ error: 'Ongeldig verzoek' }, { status: 400 })
     }
 
-    const systemPrompt = await buildSystemPrompt()
+    const systemPrompt = await buildSystemPrompt(auth.supabase)
 
     const stream = await client.messages.create({
       model: 'claude-sonnet-4-5',

@@ -14,6 +14,16 @@ const nextConfig: NextConfig = {
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
         ],
       },
+      {
+        // Beperk API routes tot same-origin; voorkomt dat een andere site
+        // namens een ingelogde gebruiker data exfiltreert.
+        source: '/api/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'no-store' },
+          { key: 'Cross-Origin-Resource-Policy', value: 'same-origin' },
+          { key: 'Vary', value: 'Origin' },
+        ],
+      },
     ]
   },
 };

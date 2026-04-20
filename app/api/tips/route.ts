@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
-import { createClient } from '@supabase/supabase-js'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { JWT } from 'google-auth-library'
 import { requireAuth } from '@/lib/auth'
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rateLimit'
@@ -81,13 +81,8 @@ async function getGA4Summary(): Promise<string> {
 
 // ─── Supabase helpers ─────────────────────────────────────────────────────────
 
-async function getSupabaseContext(): Promise<string> {
+async function getSupabaseContext(supabase: SupabaseClient): Promise<string> {
   try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-    )
-
     const [postsRes, leadsRes, analyticsRes] = await Promise.all([
       supabase.from('posts').select('status, engagement_rate, platform').limit(50),
       supabase.from('leads').select('source, status, score').limit(50),
@@ -131,8 +126,8 @@ async function getSupabaseContext(): Promise<string> {
 // ─── API Route ────────────────────────────────────────────────────────────────
 
 export async function POST(request: Request) {
-  const user = await requireAuth()
-  if (user instanceof Response) return user
+  const auth = await requireAuth()
+  if (auth instanceof Response) return auth
 
   const rl = checkRateLimit(`${getClientIP(request)}:/api/tips`, 20)
   if (!rl.allowed) return rateLimitResponse(rl.resetAt)
@@ -140,7 +135,7 @@ export async function POST(request: Request) {
   try {
     const [ga4Summary, supabaseContext] = await Promise.all([
       getGA4Summary(),
-      getSupabaseContext(),
+      getSupabaseContext(auth.supabase),
     ])
 
     const systemPrompt = `Je bent een B2B-marketingexpert die werkt voor Collo-X, een Nederlands bedrijf.

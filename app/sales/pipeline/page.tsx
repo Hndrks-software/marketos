@@ -32,6 +32,7 @@ import { supabase } from '@/lib/supabase'
 import type { Lead, PipelineStage } from '@/lib/supabase'
 import LeadCard from '@/components/sales/LeadCard'
 import LeadDetailPanel from '@/components/sales/LeadDetailPanel'
+import { getSignedUrls } from '@/lib/storage'
 import CurrencyInput from '@/components/ui/CurrencyInput'
 
 /* ──────────────────────── Droppable Column Wrapper ──────────────────────── */
@@ -207,6 +208,7 @@ export default function PipelinePage() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
   const [activeId, setActiveId] = useState<string | null>(null)
   const [undoStack, setUndoStack] = useState<{ leadId: string; fromStageId: string; fromStatus: string }[]>([])
+  const [coverUrls, setCoverUrls] = useState<Record<string, string>>({})
 
   // Undo met Ctrl+Z / Cmd+Z
   const handleUndo = useCallback(async () => {
@@ -256,6 +258,15 @@ export default function PipelinePage() {
   useEffect(() => {
     loadData()
   }, [])
+
+  // Signed URLs voor cover-afbeeldingen batchen wanneer leads veranderen.
+  useEffect(() => {
+    const paths = leads.map(l => l.cover_image_path).filter((p): p is string => !!p)
+    if (paths.length === 0) { setCoverUrls({}); return }
+    let cancelled = false
+    getSignedUrls(paths).then(map => { if (!cancelled) setCoverUrls(map) })
+    return () => { cancelled = true }
+  }, [leads])
 
   const loadData = async () => {
     setLoading(true)
@@ -510,6 +521,7 @@ export default function PipelinePage() {
                         <LeadCard
                           key={lead.id}
                           lead={lead}
+                          coverUrl={lead.cover_image_path ? coverUrls[lead.cover_image_path] : undefined}
                           onClick={setSelectedLead}
                         />
                       ))}

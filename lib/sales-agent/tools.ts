@@ -1,10 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
-import { createClient } from '@supabase/supabase-js'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-)
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 // Tool definitions for Claude API
 export const salesTools: Anthropic.Tool[] = [
@@ -103,30 +98,36 @@ export const salesTools: Anthropic.Tool[] = [
 
 // Tool handlers
 export async function handleToolCall(
+  supabase: SupabaseClient,
   name: string,
   input: Record<string, unknown>
 ): Promise<string> {
   switch (name) {
     case 'search_leads':
-      return searchLeads(input)
+      return searchLeads(supabase, input)
     case 'get_lead_details':
-      return getLeadDetails(input)
+      return getLeadDetails(supabase, input)
     case 'get_pipeline_summary':
-      return getPipelineSummary()
+      return getPipelineSummary(supabase)
     case 'get_upcoming_followups':
-      return getUpcomingFollowups(input)
+      return getUpcomingFollowups(supabase, input)
     case 'get_lead_activities':
-      return getLeadActivities(input)
+      return getLeadActivities(supabase, input)
     case 'update_lead':
-      return updateLead(input)
+      return updateLead(supabase, input)
     case 'create_activity':
-      return createActivity(input)
+      return createActivity(supabase, input)
     default:
       return JSON.stringify({ error: `Onbekende tool: ${name}` })
   }
 }
 
-async function searchLeads(input: Record<string, unknown>): Promise<string> {
+function escapeLike(input: string): string {
+  // Escape PostgREST ilike metacharacters and comma/paren that could break .or()
+  return input.replace(/[%_,()]/g, (c) => `\\${c}`)
+}
+
+async function searchLeads(supabase: SupabaseClient, input: Record<string, unknown>): Promise<string> {
   let query = supabase.from('leads').select('id, name, company, source, status, estimated_value, priority, next_action, next_action_date, stage_id, email, phone, contact_person, created_at')
 
   if (input.status) query = query.eq('status', input.status)
@@ -134,12 +135,12 @@ async function searchLeads(input: Record<string, unknown>): Promise<string> {
   if (input.source) query = query.eq('source', input.source)
   if (input.stage_id) query = query.eq('stage_id', input.stage_id)
   if (input.min_value) query = query.gte('estimated_value', input.min_value)
-  if (input.query) {
-    const searchTerm = `%${input.query}%`
-    query = query.or(`name.ilike.${searchTerm},company.ilike.${searchTerm}`)
+  if (typeof input.query === 'string' && input.query.length > 0) {
+    const term = `%${escapeLike(input.query.slice(0, 100))}%`
+    query = query.or(`name.ilike.${term},company.ilike.${term}`)
   }
 
-  const limit = (input.limit as number) || 20
+  const limit = Math.min(Number(input.limit) || 20, 100)
   const { data, error } = await query.order('created_at', { ascending: false }).limit(limit)
 
   if (error) return JSON.stringify({ error: error.message })
@@ -148,13 +149,13 @@ async function searchLeads(input: Record<string, unknown>): Promise<string> {
   return JSON.stringify({ count: data.length, results: data })
 }
 
-async function getLeadDetails(input: Record<string, unknown>): Promise<string> {
+async function getLeadDetails(supabase: SupabaseClient, input: Record<string, unknown>): Promise<string> {
   let query = supabase.from('leads').select('*')
 
   if (input.lead_id) {
     query = query.eq('id', input.lead_id)
-  } else if (input.lead_name) {
-    query = query.ilike('name', `%${input.lead_name}%`)
+  } else if (typeof input.lead_name === 'string' && input.lead_name.length > 0) {
+    query = query.ilike('name', `%${escapeLike(input.lead_name.slice(0, 100))}%`)
   } else {
     return JSON.stringify({ error: 'Geef een lead_id of lead_name op.' })
   }
@@ -187,7 +188,7 @@ async function getLeadDetails(input: Record<string, unknown>): Promise<string> {
   })
 }
 
-async function getPipelineSummary(): Promise<string> {
+async function getPipelineSummary(supabase: SupabaseClient): Promise<string> {
   const [leadsRes, stagesRes] = await Promise.all([
     supabase.from('leads').select('id, status, estimated_value, stage_id, priority, created_at'),
     supabase.from('pipeline_stages').select('*').order('position', { ascending: true }),
@@ -236,14 +237,13 @@ async function getPipelineSummary(): Promise<string> {
   })
 }
 
-async function getUpcomingFollowups(input: Record<string, unknown>): Promise<string> {
+async function getUpcomingFollowups(supabase: SupabaseClient, input: Record<string, unknown>): Promise<string> {
   const daysAhead = (input.days_ahead as number) || 7
   const today = new Date().toISOString().split('T')[0]
   const futureDate = new Date()
   futureDate.setDate(futureDate.getDate() + daysAhead)
   const futureDateStr = futureDate.toISOString().split('T')[0]
 
-  // Leads with upcoming follow-ups
   const { data: upcoming, error: upcomingError } = await supabase
     .from('leads')
     .select('id, name, company, next_action, next_action_date, priority, status, estimated_value, stage_id')
@@ -253,7 +253,6 @@ async function getUpcomingFollowups(input: Record<string, unknown>): Promise<str
 
   if (upcomingError) return JSON.stringify({ error: upcomingError.message })
 
-  // Split into overdue and upcoming
   const overdue = (upcoming || []).filter(l => l.next_action_date && l.next_action_date < today)
   const thisWeek = (upcoming || []).filter(l => l.next_action_date && l.next_action_date >= today)
 
@@ -264,8 +263,8 @@ async function getUpcomingFollowups(input: Record<string, unknown>): Promise<str
   })
 }
 
-async function getLeadActivities(input: Record<string, unknown>): Promise<string> {
-  const limit = (input.limit as number) || 20
+async function getLeadActivities(supabase: SupabaseClient, input: Record<string, unknown>): Promise<string> {
+  const limit = Math.min(Number(input.limit) || 20, 100)
 
   const { data, error } = await supabase
     .from('lead_activities')
@@ -278,11 +277,10 @@ async function getLeadActivities(input: Record<string, unknown>): Promise<string
   return JSON.stringify({ activities: data || [], count: (data || []).length })
 }
 
-async function updateLead(input: Record<string, unknown>): Promise<string> {
+async function updateLead(supabase: SupabaseClient, input: Record<string, unknown>): Promise<string> {
   const { lead_id, ...updates } = input
   if (!lead_id) return JSON.stringify({ error: 'lead_id is verplicht' })
 
-  // Only allow known fields
   const allowedFields = ['status', 'priority', 'notes', 'next_action', 'next_action_date', 'stage_id']
   const safeUpdates: Record<string, unknown> = {}
   for (const [key, value] of Object.entries(updates)) {
@@ -306,11 +304,16 @@ async function updateLead(input: Record<string, unknown>): Promise<string> {
   return JSON.stringify({ success: true, updated_lead: data })
 }
 
-async function createActivity(input: Record<string, unknown>): Promise<string> {
+async function createActivity(supabase: SupabaseClient, input: Record<string, unknown>): Promise<string> {
   const { lead_id, type, description } = input
 
   if (!lead_id || !type || !description) {
     return JSON.stringify({ error: 'lead_id, type en description zijn verplicht.' })
+  }
+
+  const allowedTypes = ['note', 'call', 'email', 'meeting']
+  if (typeof type !== 'string' || !allowedTypes.includes(type)) {
+    return JSON.stringify({ error: 'Ongeldig activiteit-type.' })
   }
 
   const { data, error } = await supabase

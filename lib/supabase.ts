@@ -1,9 +1,9 @@
-import { createClient } from '@supabase/supabase-js'
+import { createBrowserClient } from '@supabase/ssr'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key'
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey)
 
 export type Post = {
   id: string
@@ -71,6 +71,7 @@ export type Lead = {
   next_action_date: string | null
   referred_by: string | null
   cover_image_url: string | null
+  cover_image_path: string | null
   closed_at: string | null
   created_at: string
 }
@@ -80,6 +81,7 @@ export type LeadAttachment = {
   lead_id: string
   file_name: string
   file_url: string
+  file_path: string | null
   file_type: string
   is_cover: boolean
   created_at: string

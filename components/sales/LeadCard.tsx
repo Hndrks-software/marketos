@@ -20,6 +20,7 @@ const sourceConfig: Record<string, { label: string; color: string; bg: string }>
 
 type Props = {
   lead: Lead
+  coverUrl?: string
   onClick: (lead: Lead) => void
 }
 
@@ -30,7 +31,7 @@ function isNewLead(createdAt: string): boolean {
   return diffDays <= 7
 }
 
-export default function LeadCard({ lead, onClick }: Props) {
+export default function LeadCard({ lead, coverUrl, onClick }: Props) {
   const {
     attributes,
     listeners,
@@ -63,10 +64,10 @@ export default function LeadCard({ lead, onClick }: Props) {
       className="bg-white rounded-lg border border-slate-200/80 cursor-grab active:cursor-grabbing hover:shadow-md hover:border-slate-300 transition-all group overflow-hidden"
     >
       {/* Cover Image */}
-      {lead.cover_image_url && (
+      {coverUrl && (
         <div className="w-full h-32 overflow-hidden">
           <img
-            src={lead.cover_image_url}
+            src={coverUrl}
             alt={lead.company || lead.name}
             className="w-full h-full object-cover"
           />

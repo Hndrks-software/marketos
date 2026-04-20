@@ -28,8 +28,8 @@ Regels:
 const MAX_TOOL_ROUNDS = 8
 
 export async function POST(request: Request) {
-  const user = await requireAuth()
-  if (user instanceof Response) return user
+  const auth = await requireAuth()
+  if (auth instanceof Response) return auth
 
   const rl = checkRateLimit(`${getClientIP(request)}:/api/sales-agent`, 15)
   if (!rl.allowed) return rateLimitResponse(rl.resetAt)
@@ -113,7 +113,7 @@ export async function POST(request: Request) {
                 input: parsedInput,
               })
 
-              const result = await handleToolCall(block.name, parsedInput as Record<string, unknown>)
+              const result = await handleToolCall(auth.supabase, block.name, parsedInput as Record<string, unknown>)
               controller.enqueue(encoder.encode(`\n[[TOOL_RESULT:${block.name}:${result}]]\n`))
 
               toolResults.push({
