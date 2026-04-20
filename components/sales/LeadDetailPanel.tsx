@@ -122,23 +122,60 @@ export default function LeadDetailPanel({ lead, stages, onClose, onUpdate, onDel
     const files = e.target.files
     if (!files || files.length === 0) return
 
+    const MAX_BYTES = 50 * 1024 * 1024 // 50 MB — direct naar Supabase, geen Netlify-limiet
+    const BUCKET = 'lead-attachments'
+
+    const sanitize = (name: string) => {
+      const stripped = name.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      const safe = stripped.replace(/[^A-Za-z0-9._\-()]/g, '_').slice(0, 120)
+      return safe.replace(/^_+|_+$/g, '') || 'file'
+    }
+
     setUploading(true)
     const errors: string[] = []
     for (const file of Array.from(files)) {
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('lead_id', lead.id)
+      if (file.size === 0 || file.size > MAX_BYTES) {
+        errors.push(`${file.name}: te groot of leeg (max 50 MB)`)
+        continue
+      }
 
-      const res = await fetch('/api/lead-attachments', { method: 'POST', body: formData })
-      if (res.ok) {
-        const attachment = await res.json() as LeadAttachment
-        setAttachments(prev => [attachment, ...prev])
-        if (attachment.file_path && attachment.file_url) {
-          setSignedUrls(prev => ({ ...prev, [attachment.file_path!]: attachment.file_url }))
-        }
-      } else {
-        const body = await res.json().catch(() => ({ error: `HTTP ${res.status}` }))
-        errors.push(`${file.name}: ${body.error ?? `status ${res.status}`}`)
+      const safeName = sanitize(file.name)
+      const path = `${lead.id}/${Date.now()}-${safeName}`
+
+      const { error: uploadErr } = await supabase.storage
+        .from(BUCKET)
+        .upload(path, file, { contentType: file.type || 'application/octet-stream', upsert: false })
+      if (uploadErr) {
+        errors.push(`${file.name}: ${uploadErr.message}`)
+        continue
+      }
+
+      const { data: signed } = await supabase.storage.from(BUCKET).createSignedUrl(path, 3600)
+      const fileUrl = signed?.signedUrl || ''
+
+      const { data: row, error: insertErr } = await supabase
+        .from('lead_attachments')
+        .insert({
+          lead_id: lead.id,
+          file_name: safeName,
+          file_path: path,
+          file_url: fileUrl,
+          file_type: file.type || 'application/octet-stream',
+          is_cover: false,
+        })
+        .select()
+        .single()
+      if (insertErr || !row) {
+        errors.push(`${file.name}: ${insertErr?.message ?? 'DB insert mislukt'}`)
+        // Probeer geüploade file weer op te ruimen
+        await supabase.storage.from(BUCKET).remove([path])
+        continue
+      }
+
+      const attachment = row as LeadAttachment
+      setAttachments(prev => [attachment, ...prev])
+      if (attachment.file_path) {
+        setSignedUrls(prev => ({ ...prev, [attachment.file_path!]: fileUrl }))
       }
     }
     setUploading(false)
