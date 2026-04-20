@@ -10,14 +10,30 @@ const ALLOWED_MIME = new Set([
   'image/gif',
   'image/webp',
   'image/avif',
+  'image/heic',
+  'image/heif',
   'application/pdf',
   'application/msword',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   'application/vnd.ms-excel',
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
   'text/plain',
   'text/csv',
 ])
+
+const EXT_TO_MIME: Record<string, string> = {
+  jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif',
+  webp: 'image/webp', avif: 'image/avif', heic: 'image/heic', heif: 'image/heif',
+  pdf: 'application/pdf', doc: 'application/msword',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  xls: 'application/vnd.ms-excel',
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  ppt: 'application/vnd.ms-powerpoint',
+  pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  txt: 'text/plain', csv: 'text/csv',
+}
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -47,8 +63,15 @@ export async function POST(req: NextRequest) {
   if (file.size === 0 || file.size > MAX_FILE_BYTES) {
     return NextResponse.json({ error: 'Bestand te groot of leeg (max 15 MB)' }, { status: 400 })
   }
-  if (!ALLOWED_MIME.has(file.type)) {
-    return NextResponse.json({ error: `Bestandstype niet toegestaan: ${file.type}` }, { status: 400 })
+
+  // Soms is file.type leeg (iOS) — val terug op extensie-detectie.
+  const ext = (file.name.split('.').pop() || '').toLowerCase()
+  const effectiveMime = file.type || EXT_TO_MIME[ext] || ''
+  if (!ALLOWED_MIME.has(effectiveMime)) {
+    return NextResponse.json(
+      { error: `Bestandstype niet toegestaan (${file.type || ext || 'onbekend'})` },
+      { status: 400 }
+    )
   }
 
   const safeName = sanitizeFileName(file.name)
@@ -56,9 +79,10 @@ export async function POST(req: NextRequest) {
 
   const { error: uploadError } = await auth.supabase.storage
     .from(BUCKET)
-    .upload(path, file, { contentType: file.type, upsert: false })
+    .upload(path, file, { contentType: effectiveMime || 'application/octet-stream', upsert: false })
 
   if (uploadError) {
+    console.error('Storage upload error:', uploadError)
     return NextResponse.json({ error: uploadError.message }, { status: 500 })
   }
 

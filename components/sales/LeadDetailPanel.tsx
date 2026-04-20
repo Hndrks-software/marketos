@@ -123,6 +123,7 @@ export default function LeadDetailPanel({ lead, stages, onClose, onUpdate, onDel
     if (!files || files.length === 0) return
 
     setUploading(true)
+    const errors: string[] = []
     for (const file of Array.from(files)) {
       const formData = new FormData()
       formData.append('file', file)
@@ -135,10 +136,14 @@ export default function LeadDetailPanel({ lead, stages, onClose, onUpdate, onDel
         if (attachment.file_path && attachment.file_url) {
           setSignedUrls(prev => ({ ...prev, [attachment.file_path!]: attachment.file_url }))
         }
+      } else {
+        const body = await res.json().catch(() => ({ error: `HTTP ${res.status}` }))
+        errors.push(`${file.name}: ${body.error ?? `status ${res.status}`}`)
       }
     }
     setUploading(false)
     if (fileInputRef.current) fileInputRef.current.value = ''
+    if (errors.length > 0) alert(`Upload mislukt:\n\n${errors.join('\n')}`)
   }
 
   const handleDeleteAttachment = async (att: LeadAttachment) => {
