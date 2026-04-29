@@ -84,7 +84,7 @@ export default function LinkedInPage() {
             engagement_rate: Math.round(num(r[19]) * 100) / 100,
           }
         }).filter(Boolean) as ImportRow[]
-        fileType = 'content'
+        fileType = 'content-metrics'
 
         // Ook per-post data importeren uit "Alle bijdragen" sheet
         const postsSheet = workbook.Sheets['Alle bijdragen']
@@ -130,7 +130,7 @@ export default function LinkedInPage() {
           if (!date) return null
           return { date, new_followers: Math.round(num(r[2])), total_followers: Math.round(num(r[4])) }
         }).filter(Boolean) as ImportRow[]
-        fileType = 'followers'
+        fileType = 'follower-metrics'
       } else if (name.includes('visitors')) {
         const sheet = workbook.Sheets['Statistieken over bezoekers']
         if (!sheet) throw new Error('Sheet "Statistieken over bezoekers" niet gevonden')
@@ -140,7 +140,7 @@ export default function LinkedInPage() {
           if (!date) return null
           return { date, page_views: Math.round(num(r[21])), unique_visitors: Math.round(num(r[24])) }
         }).filter(Boolean) as ImportRow[]
-        fileType = 'visitors'
+        fileType = 'visitor-metrics'
       } else {
         throw new Error('Bestandsnaam niet herkend. Zorg dat de naam "content", "followers" of "visitors" bevat.')
       }
@@ -162,7 +162,7 @@ export default function LinkedInPage() {
       const json = await res.json()
 
       if (json.success) {
-        const typeLabel: Record<string, string> = { content: 'Content statistieken', followers: 'Volgers', visitors: 'Bezoekers' }
+        const typeLabel: Record<string, string> = { 'content-metrics': 'Content statistieken', 'follower-metrics': 'Volgers', 'visitor-metrics': 'Bezoekers', 'content-posts': 'Posts' }
         setUploadStatus('success')
         setUploadMessage(`✓ ${json.rowsImported} dagen geïmporteerd (${typeLabel[json.fileType] || json.fileType})`)
         setUploadDetail(`Periode: ${json.dateRange.from} t/m ${json.dateRange.to}`)
